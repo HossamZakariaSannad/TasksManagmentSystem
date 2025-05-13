@@ -33,7 +33,7 @@ export const loginUser = createAsyncThunk(
 console.log(import.meta.env.VITE_API_URL);
 console.log('API_BASE_URL:', API_BASE_URL);
 
-      const response = await apiClient.post("/auth/login/", payload);
+      const response = await apiClient.post("/api/auth/login/", payload);
       console.log('authSlice response:', JSON.stringify(response.data, null, 2));
       const { access, user } = response.data;
       if (!access) throw new Error("No access token returned from server");
