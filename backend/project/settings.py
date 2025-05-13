@@ -113,7 +113,7 @@ ASGI_APPLICATION = "project.asgi.application"
 # Database configuration using environment variables
 DATABASES = {
     "default": dj_database_url.config(
-        default=config('DATABASE_URL', default='postgres://postgres:2625@localhost:5432/task-project-system'),
+        default=config('DATABASE_URL', default='postgresql://task_user:0CmvYNMRy8B93qpZ6PfawCEs4HskVGcm@dpg-d0hcaore5dus73asuj0g-a/task_project_system'),
         conn_max_age=600,
     )
 }
@@ -144,11 +144,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 SITE_URL = config('SITE_URL', default='http://127.0.0.1:8000')
 
 # Channels configuration (Redis for production)
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [config('REDIS_URL', default='redis://127.0.0.1:6379')],
+            "hosts": [
+                config(
+                    "REDIS_URL",
+                    default="redis://default:AYcyAAIjcDFhMDAyYjZlYzU3ZWI0NzUwYjgxNDA3OWM0MDMxYjc1NHAxMA@helped-octopus-34610.upstash.io:6379"
+                )
+            ],
+            # Optional encryption for message security
+            "symmetric_encryption_keys": [config("SECRET_KEY")],
         },
     },
 }
@@ -158,8 +166,8 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='m.nasr266@gmail.com')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='efvh pzab wslt upfq')
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='hosamking21222@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='ytar bjhw gfer ndyf')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Logging for production
