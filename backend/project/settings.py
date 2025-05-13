@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     "apps.branch_location",
     "corsheaders",
     'django_extensions',
-    'ai_recommendations',
+    #'ai_recommendations', # Temporarily disabled to troubleshoot timeout
     'chat_ai',
     'jokes',
     'githubStat',

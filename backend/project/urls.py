@@ -17,7 +17,7 @@ urlpatterns = [
     path("api/branch_location/", include("apps.branch_location.urls")),
     # path('api/', include('apps.student.urls')),
     path("api/contact/", include("apps.contact.urls")),
-    path('ai/', include('ai_recommendations.urls')),
+    #path('ai/', include('ai_recommendations.urls')), # Temporarily disabled to troubleshoot timeout
     path('api/', include('chat_ai.urls')),  # 👈 Add this line
     path('api/', include('jokes.urls')),  # Include the 'jokes' app's URLs
     path('api/github/', include('githubStat.urls')),
