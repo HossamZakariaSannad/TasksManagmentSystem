@@ -13,3 +13,4 @@ psycopg2-binary==2.9.10
 python-decouple==3.8
 redis==5.2.1
 whitenoise==6.8.0
+openpyxl==3.1.5
