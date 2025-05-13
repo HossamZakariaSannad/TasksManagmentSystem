@@ -18,7 +18,7 @@ const footerInfo = {
     { name: "About Us", url: "/about" },
     { name: "Services", url: "/services" },
     { name: "Terms of Service", url: "/terms" },
-    { name: "Privacy Policy", url: "/privacy" },
+    // { name: "Privacy Policy", url: "/privacy" },
     { name: "Team", url: "/team" },
   ],
 };
