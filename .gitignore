@@ -71,3 +71,5 @@ backend/apps/*/migrations/pycache/
 !**/migrations/__init__.py
 backend/**/migrations/*.py
 !backend/**/migrations/__init__.py
+/staticfiles/
+/backend/staticfiles
