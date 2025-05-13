@@ -58,7 +58,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { isValidUrl } from "../../../utils/validation";
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
 const steps = ["Basic Info", "Assignment Target", "Review"];
 
 const SimpleButton = styled(Button)(({ theme }) => ({

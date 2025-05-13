@@ -49,7 +49,7 @@ const BookSearch = () => {
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
   console.log('BookSearch Component Rendered'); // Debug log
 
   const handleSearch = async () => {

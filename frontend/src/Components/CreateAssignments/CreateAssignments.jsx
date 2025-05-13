@@ -329,7 +329,7 @@ const CreateAssignment = () => {
       }
       return;
     }
-    const API_URL = import.meta.env.VITE_API_URL;
+    const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
     let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
       const course = courses.find((c) => c.id === formData.course);

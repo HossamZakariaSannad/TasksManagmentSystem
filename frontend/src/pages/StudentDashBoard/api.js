@@ -3,7 +3,7 @@ import axios from 'axios';
 export const fetchStudentData = async () => {
   const studentId = localStorage.getItem('user_id');
   const authToken = localStorage.getItem('authToken');
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
 
   if (!authToken || !studentId) {
     throw new Error('Missing authentication token or student ID');
