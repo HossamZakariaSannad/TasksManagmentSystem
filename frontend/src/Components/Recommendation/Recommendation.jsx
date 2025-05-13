@@ -7,9 +7,10 @@ const RecommendationForm = () => {
   const [difficulty, setDifficulty] = useState("");
   const [briefDescription, setBriefDescription] = useState("");
   const [recommendations, setRecommendations] = useState([]);
+const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchRecommendations = async () => {
-    let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${methodChoice}`;
+    let url = `${API_URL}/ai/recommendations/?method_choice=${methodChoice}`;
   
     if (methodChoice === "1") {
       url += `&course_name=${courseName}&difficulty=${difficulty}`;

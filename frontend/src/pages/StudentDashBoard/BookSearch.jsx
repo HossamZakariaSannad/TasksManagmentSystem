@@ -49,7 +49,7 @@ const BookSearch = () => {
   const [error, setError] = useState('');
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
-
+  const API_URL = import.meta.env.VITE_API_URL;
   console.log('BookSearch Component Rendered'); // Debug log
 
   const handleSearch = async () => {
@@ -65,7 +65,7 @@ const BookSearch = () => {
     setError('');
     try {
       console.log('Fetching books:', { query, maxResults }); // Debug log
-      const res = await axios.get('http://127.0.0.1:8000/book_search/search/', {
+      const res = await axios.get(`${API_URL}/book_search/search/`, {
         params: { query, max_results: maxResults },
       });
       console.log('Book API Response:', res.data); // Debug log

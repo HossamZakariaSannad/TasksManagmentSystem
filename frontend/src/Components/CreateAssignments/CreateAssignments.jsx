@@ -329,8 +329,8 @@ const CreateAssignment = () => {
       }
       return;
     }
-
-    let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
+    const API_URL = import.meta.env.VITE_API_URL;
+    let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
       const course = courses.find((c) => c.id === formData.course);
       const courseName = course ? `${course.name} Intake(${course.intake?.name || 'No Intake'})` : "";

@@ -58,7 +58,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { isValidUrl } from "../../../utils/validation";
-
+const API_URL = import.meta.env.VITE_API_URL;
 const steps = ["Basic Info", "Assignment Target", "Review"];
 
 const SimpleButton = styled(Button)(({ theme }) => ({
@@ -299,7 +299,7 @@ const CreateAssignment = () => {
       return;
     }
 
-    let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
+    let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
       const courseName = courses.find((c) => c.id === formData.course)?.name || "";
       url += `&course_name=${encodeURIComponent(courseName)}&difficulty=${encodeURIComponent(formData.difficulty)}`;

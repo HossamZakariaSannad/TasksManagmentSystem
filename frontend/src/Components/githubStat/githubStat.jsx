@@ -11,12 +11,12 @@ const GitHubStat = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dataFetched, setDataFetched] = useState(false);
-
+const API_URL = import.meta.env.VITE_API_URL;
   const fetchRepos = async () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/github/stats/", {
+      const response = await axios.get(`${API_URL}/api/github/stats/`, {
         params: {
           username: username,
           token: token || undefined,
@@ -36,7 +36,7 @@ const GitHubStat = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/github/commits/`, {
+      const response = await axios.get(`${API_URL}/api/github/commits/`, {
         params: {
           username,
           repo: repoName,
@@ -55,7 +55,7 @@ const GitHubStat = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/github/branches/`, {
+      const response = await axios.get(`${API_URL}/api/github/branches/`, {
         params: {
           username,
           repo: repoName,

@@ -3,23 +3,24 @@ import axios from 'axios';
 export const fetchStudentData = async () => {
   const studentId = localStorage.getItem('user_id');
   const authToken = localStorage.getItem('authToken');
+const API_URL = import.meta.env.VITE_API_URL;
 
   if (!authToken || !studentId) {
     throw new Error('Missing authentication token or student ID');
   }
 
-  const response = await axios.get(`http://127.0.0.1:8000/api/student/${studentId}/courses/`, {
+  const response = await axios.get(`${API_URL}/api/student/${studentId}/courses/`, {
     headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
     timeout: 5000,
   });
 
   const [gradesResponse, ...submissionResponses] = await Promise.all([
-    axios.get(`http://127.0.0.1:8000/api/grades/student/${studentId}/`, {
+    axios.get(`${API_URL}/api/grades/student/${studentId}/`, {
       headers: { Authorization: `Bearer ${authToken}` },
     }),
     ...(response.data.assignments || []).map((assignment) =>
       axios
-        .get(`http://127.0.0.1:8000/api/submission/assignment/${assignment.id}/`, {
+        .get(`${API_URL}/api/submission/assignment/${assignment.id}/`, {
           headers: { Authorization: `Bearer ${authToken}` },
         })
         .catch((error) => ({ error, data: { exists: false } }))
@@ -58,7 +59,7 @@ export const submitAssignment = async (submissionData) => {
     throw new Error('Only students can submit assignments');
   }
 
-  return axios.post('http://127.0.0.1:8000/api/submission/submit/', submissionData, {
+  return axios.post(`${API_URL}/api/submission/submit/`, submissionData, {
     headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' },
   });
 };
