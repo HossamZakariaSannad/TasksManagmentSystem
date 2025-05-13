@@ -29,6 +29,10 @@ export const loginUser = createAsyncThunk(
         ...(intake_id !== null && { intake_id }),
       };
       console.log('authSlice login payload:', JSON.stringify(payload, null, 2));
+      const API_BASE_URL = import.meta.env.VITE_API_URL 
+console.log(import.meta.env.VITE_API_URL);
+console.log('API_BASE_URL:', API_BASE_URL);
+
       const response = await apiClient.post("/auth/login/", payload);
       console.log('authSlice response:', JSON.stringify(response.data, null, 2));
       const { access, user } = response.data;

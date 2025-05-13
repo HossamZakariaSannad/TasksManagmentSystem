@@ -54,3 +54,4 @@ env/
 # Misc
 *.bak
 *.tmp
+/frontend/.env.production

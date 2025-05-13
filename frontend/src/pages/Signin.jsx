@@ -9,6 +9,8 @@ import {
 } from '@mui/material';
 import { Lock, Email, School, Work } from '@mui/icons-material';
 import apiClient from '../services/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
+console.log(import.meta.env.VITE_API_URL);
 
 const AnimatedPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
