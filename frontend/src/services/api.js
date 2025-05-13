@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
-console.log(import.meta.env.VITE_API_URL);
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com'}/api`;
+console.log('VITE_API_URL:', import.meta.env.VITE_API_URL);
 console.log('API_BASE_URL:', API_BASE_URL);
 
 const apiClient = axios.create({
