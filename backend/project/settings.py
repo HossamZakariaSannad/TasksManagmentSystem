@@ -14,7 +14,7 @@ SECRET_KEY = config('SECRET_KEY', default='your-secret-key')
 DEBUG = config('DEBUG', default='False') == 'True'
 
 # Allow hosts for production (set in environment variables)
-ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1,task-project-backend-1hx7.onrender.com').split(',')
 
 AUTH_USER_MODEL = 'staff_members.StaffMember'
 
@@ -87,7 +87,7 @@ MIDDLEWARE = [
 
 # Restrict CORS for production
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173').split(',')
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='http://localhost:5173,https://tasks-managment-system.vercel.app').split(',')
 
 ROOT_URLCONF = "project.urls"
 
@@ -141,10 +141,9 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-SITE_URL = config('SITE_URL', default='http://127.0.0.1:8000')
+SITE_URL = config('SITE_URL', default='https://task-project-backend-1hx7.onrender.com')
 
 # Channels configuration (Redis for production)
-
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
