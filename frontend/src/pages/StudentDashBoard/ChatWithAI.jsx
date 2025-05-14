@@ -36,7 +36,7 @@ const ChatWithAI = () => {
 
     try {
       console.log('Sending API request:', input); // Debug log
-      const res = await fetch('http://localhost:8000/api/chatAI/', {
+      const res = await fetch('https://task-project-backend-1hx7.onrender.com/api/chatAI/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),

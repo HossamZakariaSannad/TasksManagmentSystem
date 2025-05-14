@@ -2,10 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchTracks,
-  fetchCourses,
+  fetchCourses as fetchAssignmentCourses,
   fetchStudents,
   createAssignment,
+  clearStudents,
 } from "../../redux/createassignmentsSlice";
+import { fetchCourses as fetchMyCourses } from "../../redux/coursesSlice";
 import {
   Box,
   Paper,
@@ -58,7 +60,8 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { isValidUrl } from "../../../utils/validation";
-const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
+
+const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
 const steps = ["Basic Info", "Assignment Target", "Review"];
 
 const SimpleButton = styled(Button)(({ theme }) => ({
@@ -168,10 +171,14 @@ const CreateAssignment = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
-  const { user_id } = useSelector((state) => state.auth);
-  const { tracks, courses, students, loading, error } = useSelector(
+  const { user_id, role } = useSelector((state) => state.auth);
+  const { tracks, courses: assignmentCourses, students, loading, error } = useSelector(
     (state) => state.createassignments
   );
+  const {
+    userCourses: { track_courses, courses: myCourses },
+    status: { fetchCoursesLoading, fetchCoursesError },
+  } = useSelector((state) => state.courses);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -212,29 +219,92 @@ const CreateAssignment = () => {
     course: false,
     difficulty: false,
   });
+  const [isTrackMenuOpen, setIsTrackMenuOpen] = useState(false);
 
-  // Memoized fetch functions to prevent unnecessary re-renders
-  const fetchCoursesMemoized = useCallback(() => {
-    if (formData.track) {
-      dispatch(fetchCourses({ userId: user_id, trackId: formData.track }));
+  // Compute unique courses similar to MyCourses
+  const uniqueCourses = useMemo(() => {
+    const courseMap = new Map();
+    let sourceCourses = [];
+
+    if (role === 'supervisor') {
+      sourceCourses = (track_courses && track_courses.length > 0)
+        ? track_courses
+        : (myCourses || []);
+    } else if (role === 'instructor') {
+      const instructorTrackCourses = (track_courses || []).filter(
+        course => course.instructor?.id === user_id
+      );
+      sourceCourses = instructorTrackCourses.length > 0
+        ? instructorTrackCourses
+        : (myCourses || []).filter(course => course.instructor?.id === user_id);
     }
-  }, [dispatch, user_id, formData.track]);
 
-  const fetchStudentsMemoized = useCallback(() => {
-    if (formData.course && formData.track) {
-      dispatch(
-        fetchStudents({ trackId: formData.track, courseId: formData.course })
+    sourceCourses.forEach(course => {
+      if (!courseMap.has(course.id)) {
+        courseMap.set(course.id, {
+          ...course,
+          tracks: Array.isArray(course.tracks) ? course.tracks : [],
+        });
+      } else {
+        const existing = courseMap.get(course.id);
+        const existingTrackIds = new Set(existing.tracks.map(t => t.id));
+        course.tracks?.forEach(track => {
+          if (!existingTrackIds.has(track.id)) {
+            existing.tracks.push(track);
+            existingTrackIds.add(track.id);
+          }
+        });
+      }
+    });
+
+    // Filter by selected track
+    if (formData.track) {
+      return Array.from(courseMap.values()).filter(course =>
+        course.tracks?.some(track => track.id === formData.track)
       );
     }
-  }, [dispatch, formData.track, formData.course]);
+    return Array.from(courseMap.values());
+  }, [track_courses, myCourses, role, user_id, formData.track]);
 
+  // Fetch tracks and courses
   useEffect(() => {
     dispatch(fetchTracks(user_id));
+    dispatch(fetchMyCourses(user_id)); // Use coursesSlice to fetch courses
   }, [dispatch, user_id]);
 
+  // Validate track and reset if invalid
   useEffect(() => {
-    fetchCoursesMemoized();
-  }, [fetchCoursesMemoized]);
+    if (formData.track && tracks.length > 0) {
+      const isValidTrack = tracks.some((track) => track.id === formData.track);
+      if (!isValidTrack) {
+        setFormData((prev) => ({
+          ...prev,
+          track: "",
+          course: "",
+          selectedStudents: [],
+        }));
+      }
+    }
+  }, [tracks, formData.track]);
+
+  // Fetch students when course changes
+  const fetchStudentsMemoized = useCallback(() => {
+    if (formData.course && formData.track) {
+      const selectedCourse = uniqueCourses.find((c) => c.id === formData.course);
+      const intakeId = selectedCourse?.intake?.id;
+      if (intakeId) {
+        dispatch(
+          fetchStudents({
+            trackId: formData.track,
+            courseId: formData.course,
+            intakeId,
+          })
+        );
+      } else {
+        dispatch(clearStudents());
+      }
+    }
+  }, [dispatch, formData.track, formData.course, uniqueCourses]);
 
   useEffect(() => {
     fetchStudentsMemoized();
@@ -255,7 +325,7 @@ const CreateAssignment = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:8000/api/chatAI/", {
+        const response = await fetch("https://task-project-backend-1hx7.onrender.com/api/chatAI/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: recommendationDialog.chatInput }),
@@ -263,10 +333,9 @@ const CreateAssignment = () => {
 
         const data = await response.json();
         if (response.ok) {
-          // Clean response: remove markdown and format
           const cleanedResponse = data.response
-            .replace(/(\*\*|###|```|`|[-*+]\s)/g, "") // Remove markdown symbols and list markers
-            .replace(/\n+/g, "\n") // Normalize newlines
+            .replace(/(\*\*|###|```|`|[-*+]\s)/g, "")
+            .replace(/\n+/g, "\n")
             .trim();
           setRecommendationDialog((prev) => ({
             ...prev,
@@ -301,7 +370,8 @@ const CreateAssignment = () => {
 
     let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
-      const courseName = courses.find((c) => c.id === formData.course)?.name || "";
+      const course = uniqueCourses.find((c) => c.id === formData.course);
+      const courseName = course ? `${course.name} Intake(${course.intake?.name || 'No Intake'})` : "";
       url += `&course_name=${encodeURIComponent(courseName)}&difficulty=${encodeURIComponent(formData.difficulty)}`;
     } else {
       url += `&brief_description=${encodeURIComponent(recommendationDialog.briefDescription)}`;
@@ -439,11 +509,28 @@ const CreateAssignment = () => {
       }
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : updatedValue,
-    }));
-    setValidationErrors((prev) => ({ ...prev, [name]: false }));
+    if (name === "track") {
+      setFormData((prev) => ({
+        ...prev,
+        track: value,
+        course: "",
+        selectedStudents: [],
+      }));
+      setValidationErrors((prev) => ({ ...prev, track: false, course: false }));
+    } else if (name === "course") {
+      setFormData((prev) => ({
+        ...prev,
+        course: value,
+        selectedStudents: [],
+      }));
+      setValidationErrors((prev) => ({ ...prev, course: false }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : updatedValue,
+      }));
+      setValidationErrors((prev) => ({ ...prev, [name]: false }));
+    }
   };
 
   const handleDateChange = (name) => (date) => {
@@ -494,18 +581,18 @@ const CreateAssignment = () => {
     }));
   };
 
-  const handleSubmit= async () => {
+  const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
-  
+
     if (formData.assignToAll && (!students || students.length === 0)) {
       setSubmitDialog({
         open: true,
         success: false,
-        message: "Please wait while student data loads",
+        message: "Please wait while student data loads or select a valid course with students",
       });
       return;
     }
-  
+
     const assignmentData = {
       title: formData.title,
       description: formData.description,
@@ -520,7 +607,7 @@ const CreateAssignment = () => {
         ? students.map((s) => s.id)
         : formData.selectedStudents,
     };
-  
+
     try {
       const action = await dispatch(createAssignment(assignmentData));
       if (createAssignment.fulfilled.match(action)) {
@@ -638,28 +725,45 @@ const CreateAssignment = () => {
                   onChange={handleChange}
                   name="track"
                   label="Track"
+                  disabled={loading || fetchCoursesLoading}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        borderRadius: "8px",
+                        boxShadow: theme.shadows[3],
+                      },
+                    },
+                  }}
+                  onOpen={() => setIsTrackMenuOpen(true)}
+                  onClose={() => setIsTrackMenuOpen(false)}
                 >
-                  {tracks.map((track) => (
-                    <MenuItem key={track.id} value={track.id}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Avatar
-                          sx={{
-                            bgcolor: theme.palette.primary.main,
-                            width: 24,
-                            height: 24,
-                          }}
-                        >
-                          <SchoolIcon sx={{ fontSize: 14 }} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2">{track.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {track.description}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </MenuItem>
-                  ))}
+                  {loading || fetchCoursesLoading ? (
+                    <MenuItem disabled>Loading tracks...</MenuItem>
+                  ) : tracks.length > 0 ? (
+                    tracks.map((track) => (
+                      <MenuItem key={track.id} value={track.id}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Avatar
+                            sx={{
+                              bgcolor: theme.palette.primary.main,
+                              width: 24,
+                              height: 24,
+                            }}
+                          >
+                            <SchoolIcon sx={{ fontSize: 14 }} />
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2">{track.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {track.description}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No tracks available</MenuItem>
+                  )}
                 </StyledSelect>
                 {validationErrors.track && (
                   <Typography variant="caption" color="error">
@@ -672,7 +776,7 @@ const CreateAssignment = () => {
               <FormControl
                 fullWidth
                 required
-                disabled={!formData.track}
+                disabled={!formData.track || loading || fetchCoursesLoading || uniqueCourses.length === 0}
                 error={validationErrors.course}
               >
                 <InputLabel sx={{ fontWeight: 500 }}>Course</InputLabel>
@@ -682,22 +786,32 @@ const CreateAssignment = () => {
                   name="course"
                   label="Course"
                 >
-                  {courses.map((course) => (
-                    <MenuItem key={course.id} value={course.id}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Avatar
-                          sx={{
-                            bgcolor: theme.palette.primary.main,
-                            width: 24,
-                            height: 24,
-                          }}
-                        >
-                          <DescriptionIcon sx={{ fontSize: 14 }} />
-                        </Avatar>
-                        <Typography variant="body2">{course.name}</Typography>
-                      </Stack>
-                    </MenuItem>
-                  ))}
+                  {loading || fetchCoursesLoading ? (
+                    <MenuItem disabled>Loading courses...</MenuItem>
+                  ) : !formData.track ? (
+                    <MenuItem disabled>Select a track first</MenuItem>
+                  ) : uniqueCourses.length > 0 ? (
+                    uniqueCourses.map((course) => (
+                      <MenuItem key={course.id} value={course.id}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Avatar
+                            sx={{
+                              bgcolor: theme.palette.primary.main,
+                              width: 24,
+                              height: 24,
+                            }}
+                          >
+                            <DescriptionIcon sx={{ fontSize: 14 }} />
+                          </Avatar>
+                          <Typography variant="body2">
+                            {course.name} {course.intake ? `Intake(${course.intake.name})` : '(No Intake)'}
+                          </Typography>
+                        </Stack>
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem disabled>No courses assigned to this track</MenuItem>
+                  )}
                 </StyledSelect>
                 {validationErrors.course && (
                   <Typography variant="caption" color="error">
@@ -896,7 +1010,7 @@ const CreateAssignment = () => {
                       bgcolor: theme.palette.info.light,
                     }}
                   >
-                    No students found in this course/track combination
+                    No students found for this course and intake combination
                   </Alert>
                 )}
               </Grid>
@@ -1019,9 +1133,11 @@ const CreateAssignment = () => {
                         Course & Track
                       </Typography>
                       <Typography variant="body2">
-                        {courses.find((c) => c.id === formData.course)?.name}
+                        {uniqueCourses.find((c) => c.id === formData.course)
+                          ? `${uniqueCourses.find((c) => c.id === formData.course).name} Intake(${uniqueCourses.find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
+                          : "Not selected"}
                         <br />
-                        {tracks.find((t) => t.id === formData.track)?.name}
+                        {tracks.find((t) => t.id === formData.track)?.name || "Not selected"}
                       </Typography>
                     </Box>
                     <Box>
@@ -1036,12 +1152,12 @@ const CreateAssignment = () => {
                         {formData.assignToAll
                           ? `All students (${students?.length || 0}) in course`
                           : formData.selectedStudents.length > 0
-                          ? formData.selectedStudents
+                            ? formData.selectedStudents
                               .map(
                                 (id) => students.find((s) => s.id === id)?.name
                               )
                               .join(", ")
-                          : "No students selected"}
+                            : "No students selected"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -1080,7 +1196,7 @@ const CreateAssignment = () => {
           Create New Assignment
         </Typography>
 
-        {loading && (
+        {(loading || fetchCoursesLoading) && (
           <Box
             sx={{
               display: "flex",
@@ -1092,7 +1208,7 @@ const CreateAssignment = () => {
             <CircularProgress size={32} />
           </Box>
         )}
-        {error && (
+        {(error || fetchCoursesError) && (
           <Alert
             severity="error"
             sx={{
@@ -1102,7 +1218,20 @@ const CreateAssignment = () => {
               bgcolor: theme.palette.error.light,
             }}
           >
-            {error}
+            {error || fetchCoursesError}
+          </Alert>
+        )}
+        {!(loading || fetchCoursesLoading) && uniqueCourses.length === 0 && formData.track && (
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 2,
+              borderRadius: "8px",
+              fontSize: "0.875rem",
+              bgcolor: theme.palette.warning.light,
+            }}
+          >
+            No courses assigned for the selected track. Please contact an admin to get assigned to a course.
           </Alert>
         )}
 
@@ -1137,61 +1266,59 @@ const CreateAssignment = () => {
             border: `1px solid ${theme.palette.grey[200]}`,
           }}
         >
-          <form onSubmit={(e) => {
-  e.preventDefault();
-  if (activeStep === steps.length - 1) {
-    handleSubmit();
-  } else {
-    handleNext();
-  }
-}}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (activeStep === steps.length - 1) {
+                handleSubmit();
+              } else {
+                handleNext();
+              }
+            }}
+          >
             {getStepContent(activeStep)}
-            
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4, gap: 2 }}>
-  <Button
-    disabled={activeStep === 0}
-    onClick={handleBack}
-    variant="outlined"
-    sx={{
-      borderRadius: "8px",
-      fontWeight: 500,
-      px: 3,
-      py: 1,
-      borderColor: theme.palette.grey[300],
-      color: theme.palette.text.primary,
-      textTransform: "none",
-      "&:hover": {
-        borderColor: theme.palette.primary.main,
-        bgcolor: theme.palette.grey[50],
-      },
-    }}
-  >
-    Back
-  </Button>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4, gap: 2 }}>
+              <Button
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                variant="outlined"
+                sx={{
+                  borderRadius: "8px",
+                  fontWeight: 500,
+                  px: 3,
+                  py: 1,
+                  borderColor: theme.palette.grey[300],
+                  color: theme.palette.text.primary,
+                  textTransform: "none",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    bgcolor: theme.palette.grey[50],
+                  },
+                }}
+              >
+                Back
+              </Button>
 
-  {activeStep === steps.length - 1 ? (
-    <SimpleButton
-      type="submit"
-      variant="contained"
-      disabled={loading}
-      endIcon={<SendIcon />}
-    >
-      {loading ? (
-        <CircularProgress size={20} color="inherit" />
-      ) : (
-        "Submit Assignment"
-      )}
-    </SimpleButton>
-  ) : (
-    <SimpleButton
-      type="submit"  // Changed from onClick={handleNext}
-      variant="contained"
-    >
-      Next
-    </SimpleButton>
-  )}
-</Box>
+              {activeStep === steps.length - 1 ? (
+                <SimpleButton
+                  type="submit"
+                  variant="contained"
+                  disabled={loading || !formData.course}
+                  endIcon={<SendIcon />}
+                >
+                  {loading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    "Submit Assignment"
+                  )}
+                </SimpleButton>
+              ) : (
+                <SimpleButton type="submit" variant="contained">
+                  Next
+                </SimpleButton>
+              )}
+            </Box>
           </form>
         </Paper>
 
@@ -1202,30 +1329,28 @@ const CreateAssignment = () => {
           transitionDuration={400}
         >
           <DialogTitle sx={{ textAlign: "center", pb: 2 }}>
-  {submitDialog.success ? (
-    <CheckCircleIcon
-      color="success"
-      sx={{ fontSize: 50, mb: 1, animation: "bounce 0.5s" }}
-    />
-  ) : (
-    <ErrorIcon
-      color="error"
-      sx={{ fontSize: 50, mb: 1, animation: "shake 0.5s" }}
-    />
-  )}
-  <Typography
-    component="div"  // Changed from variant="h6"
-    sx={{ 
-      fontWeight: 500, 
-      color: theme.palette.text.primary,
-      fontSize: '1.25rem' // Adjust size as needed
-    }}
-  >
-    {submitDialog.success
-      ? "Assignment Created"
-      : "Submission Failed"}
-  </Typography>
-</DialogTitle>
+            {submitDialog.success ? (
+              <CheckCircleIcon
+                color="success"
+                sx={{ fontSize: 50, mb: 1, animation: "bounce 0.5s" }}
+              />
+            ) : (
+              <ErrorIcon
+                color="error"
+                sx={{ fontSize: 50, mb: 1, animation: "shake 0.5s" }}
+              />
+            )}
+            <Typography
+              component="div"
+              sx={{
+                fontWeight: 500,
+                color: theme.palette.text.primary,
+                fontSize: "1.25rem",
+              }}
+            >
+              {submitDialog.success ? "Assignment Created" : "Submission Failed"}
+            </Typography>
+          </DialogTitle>
           <DialogContent sx={{ textAlign: "center" }}>
             <Typography
               sx={{ mb: 2, fontSize: "0.875rem", color: theme.palette.text.secondary }}
@@ -1271,24 +1396,24 @@ const CreateAssignment = () => {
           fullWidth
         >
           <DialogTitle sx={{ display: "flex", alignItems: "center", pb: 2 }}>
-  <AutoAwesomeIcon
-    sx={{ mr: 1, color: theme.palette.primary.main, fontSize: 22 }}
-  />
-  <Typography
-    component="div"
-    sx={{ 
-      fontWeight: 500, 
-      color: theme.palette.text.primary,
-      fontSize: '1.25rem'
-    }}
-  >
-    AI Task Recommendations
-  </Typography>
-</DialogTitle>
+            <AutoAwesomeIcon
+              sx={{ mr: 1, color: theme.palette.primary.main, fontSize: 22 }}
+            />
+            <Typography
+              component="div"
+              sx={{
+                fontWeight: 500,
+                color: theme.palette.text.primary,
+                fontSize: "1.25rem",
+              }}
+            >
+              AI Task Recommendations
+            </Typography>
+          </DialogTitle>
           <DialogContent>
             <Grid container spacing={2} sx={{ mb: 2 }}>
               <Grid item xs={12}>
-                <FormControl fullWidth  sx={{ mt: 2 }}>
+                <FormControl fullWidth sx={{ mt: 2 }}>
                   <InputLabel sx={{ fontWeight: 500, fontSize: "0.875rem" }}>
                     Recommendation Method
                   </InputLabel>
@@ -1410,21 +1535,21 @@ const CreateAssignment = () => {
               )}
               {(recommendationDialog.methodChoice === "1" ||
                 recommendationDialog.methodChoice === "2") && (
-                <Grid item xs={12}>
-                  <SimpleButton
-                    variant="contained"
-                    onClick={fetchRecommendations}
-                    disabled={
-                      recommendationDialog.methodChoice === "2" &&
-                      !recommendationDialog.briefDescription.trim()
-                    }
-                    fullWidth
-                    sx={{ py: 1 }}
-                  >
-                    Get Recommendations
-                  </SimpleButton>
-                </Grid>
-              )}
+                  <Grid item xs={12}>
+                    <SimpleButton
+                      variant="contained"
+                      onClick={fetchRecommendations}
+                      disabled={
+                        recommendationDialog.methodChoice === "2" &&
+                        !recommendationDialog.briefDescription.trim()
+                      }
+                      fullWidth
+                      sx={{ py: 1 }}
+                    >
+                      Get Recommendations
+                    </SimpleButton>
+                  </Grid>
+                )}
             </Grid>
             {recommendationDialog.loading ? (
               <Box

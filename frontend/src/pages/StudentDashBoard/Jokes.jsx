@@ -68,7 +68,7 @@ const Jokes = () => {
 
     try {
       console.log('Fetching joke, Retry Count:', retryCount); // Debug log
-      const response = await fetch('http://localhost:8000/api/joke/');
+      const response = await fetch('https://task-project-backend-1hx7.onrender.com/api/joke/');
       const data = await response.json();
       console.log('Joke API Response:', data); // Debug log
 

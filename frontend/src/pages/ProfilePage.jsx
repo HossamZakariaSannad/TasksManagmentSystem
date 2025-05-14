@@ -58,7 +58,7 @@ const ProfilePage = () => {
             const studentId = localStorage.getItem("user_id");
             const token = localStorage.getItem("authToken");
             try {
-                const response = await axios.get(`http://localhost:8000/api/student/${studentId}/courses`, {
+                const response = await axios.get(`https://task-project-backend-1hx7.onrender.com/api/student/${studentId}/courses`, {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
@@ -137,7 +137,7 @@ const ProfilePage = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch(`http://localhost:8000/api/student/${studentId}/update/`, {
+            const response = await fetch(`https://task-project-backend-1hx7.onrender.com/api/student/${studentId}/update/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",

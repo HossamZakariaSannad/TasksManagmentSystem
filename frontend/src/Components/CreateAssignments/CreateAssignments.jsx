@@ -287,7 +287,7 @@ const CreateAssignment = () => {
       }
 
       try {
-        const response = await fetch("http://localhost:8000/api/chatAI/", {
+        const response = await fetch("https://task-project-backend-1hx7.onrender.com/api/chatAI/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: recommendationDialog.chatInput }),
@@ -1124,12 +1124,12 @@ const CreateAssignment = () => {
                         {formData.assignToAll
                           ? `All students (${students?.length || 0}) in course`
                           : formData.selectedStudents.length > 0
-                          ? formData.selectedStudents
+                            ? formData.selectedStudents
                               .map(
                                 (id) => students.find((s) => s.id === id)?.name
                               )
                               .join(", ")
-                          : "No students selected"}
+                            : "No students selected"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -1507,21 +1507,21 @@ const CreateAssignment = () => {
               )}
               {(recommendationDialog.methodChoice === "1" ||
                 recommendationDialog.methodChoice === "2") && (
-                <Grid item xs={12}>
-                  <SimpleButton
-                    variant="contained"
-                    onClick={fetchRecommendations}
-                    disabled={
-                      recommendationDialog.methodChoice === "2" &&
-                      !recommendationDialog.briefDescription.trim()
-                    }
-                    fullWidth
-                    sx={{ py: 1 }}
-                  >
-                    Get Recommendations
-                  </SimpleButton>
-                </Grid>
-              )}
+                  <Grid item xs={12}>
+                    <SimpleButton
+                      variant="contained"
+                      onClick={fetchRecommendations}
+                      disabled={
+                        recommendationDialog.methodChoice === "2" &&
+                        !recommendationDialog.briefDescription.trim()
+                      }
+                      fullWidth
+                      sx={{ py: 1 }}
+                    >
+                      Get Recommendations
+                    </SimpleButton>
+                  </Grid>
+                )}
             </Grid>
             {recommendationDialog.loading ? (
               <Box

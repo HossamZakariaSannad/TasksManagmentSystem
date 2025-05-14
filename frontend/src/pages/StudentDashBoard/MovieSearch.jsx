@@ -54,7 +54,7 @@ const MovieSearch = () => {
     setLoading((prev) => ({ ...prev, trending: true }));
     setError((prev) => ({ ...prev, trending: '' }));
     try {
-      const res = await axios.get('http://localhost:8000/movie_search/trending/');
+      const res = await axios.get('https://task-project-backend-1hx7.onrender.com/movie_search/trending/');
       setTrending(res.data || []);
       setRetryCount((prev) => ({ ...prev, trending: 0 }));
     } catch (err) {
@@ -86,7 +86,7 @@ const MovieSearch = () => {
     setLoading((prev) => ({ ...prev, genre: true }));
     setError((prev) => ({ ...prev, genre: '' }));
     try {
-      const res = await axios.get(`http://localhost:8000/movie_search/by_genre/?genre_id=${genreId}`);
+      const res = await axios.get(`https://task-project-backend-1hx7.onrender.com/movie_search/by_genre/?genre_id=${genreId}`);
       setGenreMovies(res.data || []);
       setRetryCount((prev) => ({ ...prev, genre: 0 }));
     } catch (err) {
@@ -109,7 +109,7 @@ const MovieSearch = () => {
     setLoading((prev) => ({ ...prev, trailer: true }));
     setError((prev) => ({ ...prev, trailer: '' }));
     try {
-      const res = await axios.get(`http://localhost:8000/movie_search/trailer/?title=${encodeURIComponent(trailerTitle)}`);
+      const res = await axios.get(`https://task-project-backend-1hx7.onrender.com/movie_search/trailer/?title=${encodeURIComponent(trailerTitle)}`);
       setTrailerUrl(res.data.trailer_url || '');
       setRetryCount((prev) => ({ ...prev, trailer: 0 }));
     } catch (err) {
