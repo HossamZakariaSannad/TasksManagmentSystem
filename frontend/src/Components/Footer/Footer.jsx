@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const footerInfo = {
-  logo: "TaskManager",
+  logo: "TaskFlow",
   address: "Egypt - Cairo, New Capital",
   address2: "Knowledge City - ITI",
   phone: "+20 17002",
@@ -15,11 +15,11 @@ const footerInfo = {
   },
   usefulLinks: [
     { name: "Home", url: "/" },
+    { name: "SignIn", url: "/signin" },
     { name: "About Us", url: "/about" },
     { name: "Services", url: "/services" },
     { name: "Terms of Service", url: "/terms" },
     // { name: "Privacy Policy", url: "/privacy" },
-    { name: "Team", url: "/team" },
   ],
 };
 

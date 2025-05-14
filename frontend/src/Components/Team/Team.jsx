@@ -67,10 +67,10 @@ const teamMembers = [
   },
   {
     portfolio: "5",
-    name: "Pola Magdy",
+    name: "Paula Magdy",
     role: "Full Stack Developer",
     description:
-      "Pola is in charge of creating unit testing, UI/UX that make our platform modern.",
+      "Paula leads the development of unit testing and modern UI/UX, ensuring our platform is cutting-edge and user-friendly.",
     image: pola,
     socialLinks: {
       linkedin: "https://www.linkedin.com/in/paula-magdy/",
@@ -83,7 +83,7 @@ const teamMembers = [
 const Team = () => {
   return (
     <section id="team" className="team section">
-      <div className="container section-title" data-aos="fade-up">
+      <div className="container section-title d-flex flex-column" data-aos="fade-up">
         <span>Our Team</span>
         <h2>Meet the Team</h2>
         <p>
@@ -113,6 +113,11 @@ const Team = () => {
                   src={member.image}
                   className="img-fluid"
                   alt={member.name}
+                  style={{
+                    width: "100%",
+                    minHeight: "300px",
+                    maxHeight: "300px",
+                  }}
                 />
                 <div className="member-content">
                   <h4>{member.name}</h4>
@@ -133,7 +138,7 @@ const Team = () => {
                     href={member.portfolio}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="details-link"
+                    className="details-link mt-1"
                   >
                     <i className="bi bi-link-45deg"></i> View Portfolio
                   </a>

@@ -49,7 +49,7 @@ const servicesData = [
 const Services = () => {
   return (
     <section className="services section">
-      <div className="container section-title" data-aos="fade-up">
+      <div className="container section-title d-flex flex-column" data-aos="fade-up">
         <span>Our Services</span>
         <h2>Project & Task Management Solutions</h2>
         <p>

@@ -24,7 +24,7 @@ const About = () => {
 
   return (
     <section className="about section">
-      <div className="container section-title" data-aos="fade-up">
+      <div className="container section-title d-flex flex-column" data-aos="fade-up">
         <span>{aboutData.title}</span>
         <h2>{aboutData.title}</h2>
         <p>{aboutData.description}</p>
