@@ -8,6 +8,7 @@ import {
   FiCalendar,
   FiAward,
   FiClipboard,
+  FiMessageCircle,
   FiUploadCloud,
 } from "react-icons/fi";
 import { styled } from "@mui/material/styles";
@@ -115,6 +116,7 @@ const InstructorDashboard = () => {
     { text: "Create Assignment", icon: <FiClipboard size={20} />, path: "/instructor/dashboard/create-assignment" },
     { text: "Submissions", icon: <FiUploadCloud size={20} />, path: "/instructor/dashboard/submissions" },
     { text: "Grades & Feedbacks", icon: <FiAward size={20} />, path: "/instructor/dashboard/grades" },
+    { text: 'Chat', icon: <FiMessageCircle />, path: '/instructor/dashboard/chat' },
   ];
   const displayName = username ? username.split("@")[0] : "Instructor";
 

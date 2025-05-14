@@ -111,7 +111,7 @@ const AssignmentCard = ({
             {(isMissed || isPastDeadline) && (
               <Box display="flex" alignItems="center">
                 <FiClock style={{ color: '#f57c00', marginRight: 8 }} />
-                <Typography variant="body2 destructor: AssignmentCard" color="warning.main">
+                <Typography variant="body2" color="warning.main">
                   {isMissed ? 'Missed' : 'Deadline Passed'}
                 </Typography>
               </Box>
@@ -264,6 +264,21 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
     let fileUrl = urlInputs[assignmentId]?.trim();
     const studentId = localStorage.getItem('user_id');
 
+    console.log('handleSubmitAssignment - Inputs:', {
+      assignmentId,
+      courseId,
+      fileUrl,
+      studentId,
+    });
+
+    if (!studentId) {
+      setSubmissionStatus((prev) => ({
+        ...prev,
+        [assignmentId]: { success: false, message: 'User not authenticated. Please log in.' },
+      }));
+      return;
+    }
+
     if (!fileUrl) {
       setSubmissionStatus((prev) => ({
         ...prev,
@@ -285,16 +300,32 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
       return;
     }
 
+    console.log('handleSubmitAssignment - Validated URL:', fileUrl);
+
+    const submissionData = {
+      student: studentId,
+      course: courseId,
+      assignment: assignmentId,
+      track: data.student?.track_id,
+      file_url: fileUrl,
+    };
+
+    if (!submissionData.student || !submissionData.course || !submissionData.assignment || !submissionData.track || !submissionData.file_url) {
+      console.error('handleSubmitAssignment - Missing submission data:', submissionData);
+      setSubmissionStatus((prev) => ({
+        ...prev,
+        [assignmentId]: { success: false, message: 'Incomplete submission data. Please try again.' },
+      }));
+      return;
+    }
+
+    console.log('handleSubmitAssignment - Submission Data:', submissionData);
+
     setIsSubmitting((prev) => ({ ...prev, [assignmentId]: true }));
 
     try {
-      await submitAssignment({
-        student: studentId,
-        course: courseId,
-        assignment: assignmentId,
-        track: data.student.track_id,
-        file_url: fileUrl,
-      });
+      const response = await submitAssignment(submissionData);
+      console.log('handleSubmitAssignment - API Response:', response.data);
 
       setSubmittedAssignments((prev) => {
         const updated = {
@@ -313,12 +344,20 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
       setUrlInputs((prev) => ({ ...prev, [assignmentId]: '' }));
       setExpandedAssignment(null);
     } catch (error) {
+      console.error('handleSubmitAssignment - Error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+      });
+
+      const errorMessage = error.message.includes('Network Error')
+        ? 'Network error. Please check your connection and try again.'
+        : error.response?.data?.message || 'Submission failed. Please try again.';
+
       setSubmissionStatus((prev) => ({
         ...prev,
-        [assignmentId]: {
-          success: false,
-          message: error.response?.data?.message || 'Submission failed. Please try again.',
-        },
+        [assignmentId]: { success: false, message: errorMessage },
       }));
     } finally {
       setIsSubmitting((prev) => ({ ...prev, [assignmentId]: false }));
@@ -456,7 +495,6 @@ AssignmentsSection.propTypes = {
     assignments: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string.isRequired,
-        destructor: AssignmentsSection,
         course: PropTypes.string.isRequired,
         course_name: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,
