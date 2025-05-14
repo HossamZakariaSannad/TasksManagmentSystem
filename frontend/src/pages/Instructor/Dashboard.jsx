@@ -37,14 +37,18 @@ const SidebarWrapper = styled(Box)(({ theme, open }) => ({
   position: "sticky",
   top: 0,
   transition: theme.transitions.create("width"),
-  backgroundColor: theme.palette.background.paper,
+  backgroundColor: '#333', // Changed to #333
   boxShadow: theme.shadows[4],
   zIndex: theme.zIndex.appBar,
+  color: theme.palette.common.white, // Ensure text/icons are readable
+  '& svg': {
+    color: theme.palette.common.white, // Ensure icons are white
+  },
 }));
 
 const SidebarHeader = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2),
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  borderBottom: `1px solid ${theme.palette.grey[700]}`, // Darker divider for contrast
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -56,12 +60,12 @@ const MenuItem = styled(Link)(({ theme, active }) => ({
   padding: theme.spacing(1.5, 2),
   margin: theme.spacing(0.5, 1.5),
   borderRadius: theme.shape.borderRadius,
-  color: active ? theme.palette.primary.main : theme.palette.text.secondary,
-  backgroundColor: active ? theme.palette.action.selected : "transparent",
+  color: active ? theme.palette.primary.main : theme.palette.grey[300], // Lighter text for contrast
+  backgroundColor: active ? theme.palette.grey[800] : "transparent", // Darker active background
   textDecoration: "none",
   transition: theme.transitions.create(["background-color", "color"]),
   "&:hover": {
-    backgroundColor: theme.palette.action.hover,
+    backgroundColor: theme.palette.grey[700], // Dark hover effect
     color: theme.palette.primary.main,
   },
   "& svg": {
@@ -95,15 +99,10 @@ const InstructorDashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  // Reset sidebar state when a new instructor logs in
   useEffect(() => {
-    // Reset sidebar to open state for new user
     setSidebarOpen(true);
-    // Optionally clear any instructor-specific localStorage
-    // localStorage.removeItem(`instructor_${username}_data`); // Example, if used
   }, [username]);
 
-  // Close sidebar on mobile by default
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
@@ -128,7 +127,7 @@ const InstructorDashboard = () => {
               <Box>
                 <Typography
                   variant="subtitle2"
-                  color="textSecondary"
+                  color="grey.400" // Lighter for contrast
                   gutterBottom
                 >
                   Welcome back,
@@ -140,7 +139,7 @@ const InstructorDashboard = () => {
               <IconButton
                 onClick={() => setSidebarOpen(false)}
                 size="small"
-                sx={{ color: "text.secondary" }}
+                sx={{ color: "grey.300" }} // Lighter icon
               >
                 <FiX size={18} />
               </IconButton>
@@ -149,7 +148,7 @@ const InstructorDashboard = () => {
             <IconButton
               onClick={() => setSidebarOpen(true)}
               size="small"
-              sx={{ color: "text.secondary" }}
+              sx={{ color: "grey.300" }}
             >
               <FiMenu size={18} />
             </IconButton>

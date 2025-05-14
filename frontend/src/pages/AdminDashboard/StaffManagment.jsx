@@ -208,10 +208,10 @@ const StaffManagement = () => {
             <FormControl fullWidth sx={{ mb: 2 }} required>
               <InputLabel>Role</InputLabel>
               <Select name="role" value={formData.role} onChange={handleChange} label="Role">
-                <MenuItem value="instructor">Instructor</MenuItem>
+                {/* <MenuItem value="instructor">Instructor</MenuItem> */}
                 <MenuItem value="supervisor">Supervisor</MenuItem>
                 <MenuItem value="branch_manager">Branch Manager</MenuItem>
-                <MenuItem value="admin">System Administrator</MenuItem>
+                {/* <MenuItem value="admin">System Administrator</MenuItem> */}
               </Select>
             </FormControl>
             <FormControl fullWidth sx={{ mb: 2 }} required={['supervisor', 'branch_manager'].includes(formData.role)}>
