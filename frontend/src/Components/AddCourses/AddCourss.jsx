@@ -70,7 +70,7 @@ const StyledTableRow = styled(TableRow)(() => ({
 
 const AddCourses = () => {
   const dispatch = useDispatch();
-  const { user_id } = useSelector((state) => state.auth);
+  const { user_id, username } = useSelector((state) => state.auth);
   const {
     instructors,
     loading: instructorsLoading,
@@ -180,7 +180,7 @@ const AddCourses = () => {
     );
   }, [newCourseForm.tracks]);
 
-  // Filter instructors by selected tracks (matching ReAssignCourses and AllCourseManagement)
+  // Filter instructors by selected tracks
   const getTrackInstructors = useCallback((trackIds) => {
     if (!trackIds.length || !userCourses.track_courses.length || !instructors.length) {
       console.log('No trackIds, courses, or instructors, returning empty array', {
@@ -339,10 +339,46 @@ const AddCourses = () => {
   const trackOptions = useMemo(() => userCourses?.tracks || [], [userCourses]);
   const courseOptions = useMemo(() => allCourses || [], [allCourses]);
   const intakeOptions = useMemo(() => availableIntakes || [], [availableIntakes]);
+
+  // Modified instructor options to always include the supervisor from authSlice
   const instructorOptions = useMemo(() => {
     const trackIds = newCourseForm.tracks.map((track) => track.id);
-    return getTrackInstructors(trackIds);
-  }, [newCourseForm.tracks, getTrackInstructors]);
+    const trackInstructors = getTrackInstructors(trackIds);
+
+    // Create a pseudo-instructor from authSlice data
+    const supervisor = {
+      id: user_id,
+      username: username || `User ${user_id}`,
+      full_name: null,
+    };
+
+    // Combine track instructors and supervisor
+    const allInstructors = [...trackInstructors];
+    if (!trackInstructors.some((inst) => inst.id === user_id)) {
+      allInstructors.unshift(supervisor); // Add supervisor at the top
+    }
+
+    // Debug logs
+    console.log('Instructor Options Debug:', {
+      user_id,
+      username,
+      supervisor,
+      trackInstructors,
+      allInstructors,
+      selectedTrackIds: trackIds,
+      userCoursesTracks: userCourses.tracks,
+    });
+
+    // Map instructors to include "(me)" for the logged-in supervisor
+    return allInstructors.map((instructor) => ({
+      ...instructor,
+      displayName:
+        instructor.id === user_id
+          ? `${instructor.full_name || instructor.username || `Instructor ${instructor.id}`} (me)`
+          : instructor.full_name || instructor.username || `Instructor ${instructor.id}`,
+    }));
+  }, [newCourseForm.tracks, getTrackInstructors, user_id, username, instructors, userCourses.tracks]);
+
   const CreateOptions = [
     { name: "As Existing", value: "notNull", id: 0 },
     { name: "As Form", value: "Null", id: 1 },
@@ -539,29 +575,27 @@ const AddCourses = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={12}>
-  <FormControl variant="outlined" fullWidth sx={{ mb: 2 }}>
-    <InputLabel id="instructor-select-label">Instructor (optional)</InputLabel>
-    <Select
-      labelId="instructor-select-label"
-      value={newCourseForm.instructor}
-      onChange={handleInstructorSelect}
-      label="Instructor (optional)"
-      sx={{ borderRadius: 2 }}
-      disabled={instructorsLoading || !instructorOptions.length}
-    >
-      <MenuItem value="">
-        <em>Not assigned</em>
-      </MenuItem>
-      {instructorOptions.map((instructor) => (
-        <MenuItem key={instructor.id} value={instructor.id}>
-          {instructor.full_name || instructor.username || `Instructor ${instructor.id}`}
-        </MenuItem>
-      ))}
-    </Select>
-  </FormControl>
-</Grid>
-
-              
+                <FormControl variant="outlined" fullWidth sx={{ mb: 2 }}>
+                  <InputLabel id="instructor-select-label">Instructor (optional)</InputLabel>
+                  <Select
+                    labelId="instructor-select-label"
+                    value={newCourseForm.instructor}
+                    onChange={handleInstructorSelect}
+                    label="Instructor (optional)"
+                    sx={{ borderRadius: 2 }}
+                    disabled={instructorsLoading || newCourseForm.tracks.length === 0}
+                  >
+                    <MenuItem value="">
+                      <em>Not assigned</em>
+                    </MenuItem>
+                    {instructorOptions.map((instructor) => (
+                      <MenuItem key={instructor.id} value={instructor.id}>
+                        {instructor.displayName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth>
                   <Autocomplete
