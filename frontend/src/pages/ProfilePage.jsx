@@ -67,11 +67,11 @@ const ProfilePage = () => {
                 const data = response.data;
                 // console.log('DATAAAAAAAAAAAA:', data);
 
-                const [firstName, lastName] = data.student.name?.split(' ') || [];
+                const [firstName, lastName] = data.student.full_name?.split(' ') || [];
                 const dateJoined = data.student.date_joined?.split("T")[0] || '';
 
                 setUserData({
-                    fullName: data.student.name || '',
+                    fullName: data.student.full_name || '',
                     first_name: firstName || '',
                     last_name: lastName || '',
                     email: data.student.email || '',
@@ -205,7 +205,7 @@ const ProfilePage = () => {
 
                     <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                         <Typography variant="h4" sx={{ color: '#eee', fontWeight: 700, mb: 0.5 }}>
-                            {userData.fullName}
+                            {userData.first_name}
                         </Typography>
                         <Typography variant="body1" sx={{ color: '#aaa', mb: 1 }}>
                             {userData.role} At ITI
@@ -286,7 +286,7 @@ const ProfilePage = () => {
                             />
                         </Grid>
 
-                        <Grid item xs={12} md={6}>
+                        {/* <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
                                 label="Phone"
@@ -301,7 +301,7 @@ const ProfilePage = () => {
                                 }}
                                 sx={textFieldStyles}
                             />
-                        </Grid>
+                        </Grid> */}
 
                         <Grid item xs={12} md={6}>
                             <TextField
