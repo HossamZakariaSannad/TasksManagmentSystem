@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { fetchCourses } from "../../redux/coursesSlice";
 import {
-  fetchTracks,
-  fetchCourses,
+  fetchCourses as fetchCoursesForAssignments,
   fetchStudents,
   createAssignment,
 } from "../../redux/createassignmentsSlice";
@@ -169,13 +169,14 @@ const CreateAssignment = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
   const { user_id } = useSelector((state) => state.auth);
-  const { tracks, courses, students, loading, error } = useSelector(
+  const { tracks } = useSelector((state) => state.courses.userCourses);
+  const { courses, students, loading, error } = useSelector(
     (state) => state.createassignments
   );
 
   useEffect(() => {
     console.log("Tracks:", tracks);
-    console.log("Courses:", courses);
+    console.log("Courses from createassignments:", courses);
     console.log("Students:", students);
     console.log("Loading:", loading);
     console.log("Error:", error);
@@ -222,6 +223,17 @@ const CreateAssignment = () => {
   });
   const [isTrackMenuOpen, setIsTrackMenuOpen] = useState(false);
 
+  // Fallback to coursesSlice tracks for courses if createassignments.courses is incomplete
+  const getCoursesForTrack = useCallback(() => {
+    if (!formData.track) return courses;
+    const track = tracks.find((t) => t.id === formData.track);
+    if (track && track.courses && track.courses.length > courses.length) {
+      console.log("Using tracks.courses as fallback:", track.courses);
+      return track.courses;
+    }
+    return courses;
+  }, [tracks, courses, formData.track]);
+
   useEffect(() => {
     if (formData.track && tracks.length > 0) {
       const isValidTrack = tracks.some((track) => track.id === formData.track);
@@ -238,13 +250,13 @@ const CreateAssignment = () => {
 
   const fetchCoursesMemoized = useCallback(() => {
     if (formData.track) {
-      dispatch(fetchCourses({ userId: user_id, trackId: formData.track }));
+      dispatch(fetchCoursesForAssignments({ userId: user_id, trackId: formData.track }));
     }
   }, [dispatch, user_id, formData.track]);
 
   const fetchStudentsMemoized = useCallback(() => {
     if (formData.course && formData.track) {
-      const selectedCourse = courses.find((c) => c.id === formData.course);
+      const selectedCourse = getCoursesForTrack().find((c) => c.id === formData.course);
       const intakeId = selectedCourse?.intake?.id;
       if (intakeId) {
         dispatch(
@@ -258,10 +270,10 @@ const CreateAssignment = () => {
         dispatch({ type: 'assignments/clearStudents' });
       }
     }
-  }, [dispatch, formData.track, formData.course, courses]);
+  }, [dispatch, formData.track, formData.course, getCoursesForTrack]);
 
   useEffect(() => {
-    dispatch(fetchTracks(user_id));
+    dispatch(fetchCourses(user_id));
   }, [dispatch, user_id]);
 
   useEffect(() => {
@@ -329,10 +341,10 @@ const CreateAssignment = () => {
       }
       return;
     }
-    const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
+    const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
     let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
-      const course = courses.find((c) => c.id === formData.course);
+      const course = getCoursesForTrack().find((c) => c.id === formData.course);
       const courseName = course ? `${course.name} Intake(${course.intake?.name || 'No Intake'})` : "";
       url += `&course_name=${encodeURIComponent(courseName)}&difficulty=${encodeURIComponent(formData.difficulty)}`;
     } else {
@@ -726,9 +738,9 @@ const CreateAssignment = () => {
                           </Avatar>
                           <Box>
                             <Typography variant="body2">{track.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            {/* <Typography variant="caption" color="text.secondary">
                               {track.description}
-                            </Typography>
+                            </Typography> */}
                           </Box>
                         </Stack>
                       </MenuItem>
@@ -748,7 +760,7 @@ const CreateAssignment = () => {
               <FormControl
                 fullWidth
                 required
-                disabled={!formData.track || loading || courses.length === 0}
+                disabled={!formData.track || loading || getCoursesForTrack().length === 0}
                 error={validationErrors.course}
               >
                 <InputLabel sx={{ fontWeight: 500 }}>Course</InputLabel>
@@ -762,8 +774,8 @@ const CreateAssignment = () => {
                     <MenuItem disabled>Loading courses...</MenuItem>
                   ) : !formData.track ? (
                     <MenuItem disabled>Select a track first</MenuItem>
-                  ) : courses.length > 0 ? (
-                    courses.map((course) => (
+                  ) : getCoursesForTrack().length > 0 ? (
+                    getCoursesForTrack().map((course) => (
                       <MenuItem key={course.id} value={course.id}>
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <Avatar
@@ -1105,8 +1117,8 @@ const CreateAssignment = () => {
                         Course & Track
                       </Typography>
                       <Typography variant="body2">
-                        {courses.find((c) => c.id === formData.course)
-                          ? `${courses.find((c) => c.id === formData.course).name} Intake(${courses.find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
+                        {getCoursesForTrack().find((c) => c.id === formData.course)
+                          ? `${getCoursesForTrack().find((c) => c.id === formData.course).name} Intake(${getCoursesForTrack().find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
                           : "Not selected"}
                         <br />
                         {tracks.find((t) => t.id === formData.track)?.name || "Not selected"}
@@ -1193,7 +1205,7 @@ const CreateAssignment = () => {
             {error}
           </Alert>
         )}
-        {!loading && courses.length === 0 && formData.track && (
+        {!loading && getCoursesForTrack().length === 0 && formData.track && (
           <Alert
             severity="warning"
             sx={{
@@ -1203,7 +1215,7 @@ const CreateAssignment = () => {
               bgcolor: theme.palette.warning.light,
             }}
           >
-            No courses assigned for the selected track. Please contact an admin to get assigned to a course.
+            You are not assigned to any course in this track.
           </Alert>
         )}
 

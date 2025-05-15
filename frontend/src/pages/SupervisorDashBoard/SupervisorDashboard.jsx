@@ -23,7 +23,6 @@ import AddCourses from '../../Components/AddCourses/AddCourss';
 import Grades from '../../Components/Grades/Grades';
 import CreateAssignment from '../../Components/CreateAssignments/CreateAssignments';
 import UploadStudentPage from '../../components/AddStudent';
-// import UploadStudentPage from './../../Components/AddStudent';
 import UploadInstructor from '../../Components/AddInstructor/AddInstructor';
 import ManageStudents from "../../Components/ManageStudent/ManageStudent"
 // ** Chat imports **
@@ -32,7 +31,6 @@ import ChatRoomList from '../../Components/Chat/ChatRoomList';
 import Tracks from '../../Components/Tracks/Tracks';
 import ReassignInstructor from '../../Components/ReAssignCourse/ReAssignCourse';
 import ViewIntakes from '../../Components/ViewIntakes';
-
 
 const SupervisorDashboard = () => {
   const { username } = useSelector((state) => state.auth);
