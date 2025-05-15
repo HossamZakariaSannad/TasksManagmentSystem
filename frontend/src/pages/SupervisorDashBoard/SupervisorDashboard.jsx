@@ -22,7 +22,7 @@ import Submissions from '../../Components/Submissions/Submissions';
 import AddCourses from '../../Components/AddCourses/AddCourss';
 import Grades from '../../Components/Grades/Grades';
 import CreateAssignment from '../../Components/CreateAssignments/CreateAssignments';
-import UploadStudentPage from '../../Components/AddStudent';
+import UploadStudentPage from '../../components/AddStudent';
 // import UploadStudentPage from './../../Components/AddStudent';
 import UploadInstructor from '../../Components/AddInstructor/AddInstructor';
 import ManageStudents from "../../Components/ManageStudent/ManageStudent"
