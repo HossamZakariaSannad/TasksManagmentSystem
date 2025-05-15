@@ -274,7 +274,10 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
     if (!studentId) {
       setSubmissionStatus((prev) => ({
         ...prev,
-        [assignmentId]: { success: false, message: 'User not authenticated. Please log in.' },
+        [assignmentId]: {
+          success: false,
+          message: 'User not authenticated. Please log in.',
+        },
       }));
       return;
     }
@@ -282,20 +285,29 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
     if (!fileUrl) {
       setSubmissionStatus((prev) => ({
         ...prev,
-        [assignmentId]: { success: false, message: 'Please enter a valid URL' },
+        [assignmentId]: {
+          success: false,
+          message: 'Please enter a valid URL',
+        },
       }));
       return;
     }
 
+    // Add "https://" if missing
     if (!fileUrl.match(/^https?:\/\//)) {
       fileUrl = `https://${fileUrl}`;
     }
 
-    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+    // Validate the URL
+    const urlPattern =
+      /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
     if (!urlPattern.test(fileUrl)) {
       setSubmissionStatus((prev) => ({
         ...prev,
-        [assignmentId]: { success: false, message: 'Please enter a valid URL' },
+        [assignmentId]: {
+          success: false,
+          message: 'Please enter a valid URL',
+        },
       }));
       return;
     }
@@ -310,17 +322,25 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
       file_url: fileUrl,
     };
 
-    if (!submissionData.student || !submissionData.course || !submissionData.assignment || !submissionData.track || !submissionData.file_url) {
+    if (
+      !submissionData.student ||
+      !submissionData.course ||
+      !submissionData.assignment ||
+      !submissionData.track ||
+      !submissionData.file_url
+    ) {
       console.error('handleSubmitAssignment - Missing submission data:', submissionData);
       setSubmissionStatus((prev) => ({
         ...prev,
-        [assignmentId]: { success: false, message: 'Incomplete submission data. Please try again.' },
+        [assignmentId]: {
+          success: false,
+          message: 'Incomplete submission data. Please try again.',
+        },
       }));
       return;
     }
 
     console.log('handleSubmitAssignment - Submission Data:', submissionData);
-
     setIsSubmitting((prev) => ({ ...prev, [assignmentId]: true }));
 
     try {
@@ -330,21 +350,21 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
       setSubmittedAssignments((prev) => {
         const updated = {
           ...prev,
-          [assignmentId]: { submitted: true, submission_date: new Date().toISOString() },
+          [assignmentId]: {
+            submitted: true,
+            submission_date: new Date().toISOString(),
+          },
         };
+        console.log('✅ Updated submittedAssignments:', updated);
         localStorage.setItem('submittedAssignments', JSON.stringify(updated));
         return updated;
       });
 
-      setSubmissionStatus((prev) => ({
-        ...prev,
-        [assignmentId]: { success: true, message: 'Assignment submitted successfully!' },
-      }));
 
       setUrlInputs((prev) => ({ ...prev, [assignmentId]: '' }));
       setExpandedAssignment(null);
     } catch (error) {
-      console.error('handleSubmitAssignment - Error:', {
+      console.error('❌ handleSubmitAssignment - Error:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
@@ -357,12 +377,16 @@ const AssignmentsSection = ({ data, submittedAssignments, setSubmittedAssignment
 
       setSubmissionStatus((prev) => ({
         ...prev,
-        [assignmentId]: { success: false, message: errorMessage },
+        [assignmentId]: {
+          success: false,
+          message: errorMessage,
+        },
       }));
     } finally {
       setIsSubmitting((prev) => ({ ...prev, [assignmentId]: false }));
     }
   };
+
 
   const getMissedAssignments = useMemo(() => {
     const now = new Date();

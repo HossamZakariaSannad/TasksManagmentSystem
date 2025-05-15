@@ -33,6 +33,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  CircularProgress,
 } from "@mui/material";
 import {
   Edit as EditIcon,
@@ -40,6 +41,7 @@ import {
   Warning as WarningIcon,
   GetApp as DownloadIcon,
   Clear as ClearIcon,
+  Refresh as RetryIcon,
 } from "@mui/icons-material";
 
 const Assignments = () => {
@@ -60,7 +62,10 @@ const Assignments = () => {
     open: false,
     message: "",
     severity: "success",
+    retryAction: null,
   });
+  const [downloading, setDownloading] = useState(null); // Track downloading state per assignment
+  const [retryCounts, setRetryCounts] = useState({}); // Track retries per assignment
   // Filter states
   const [filterType, setFilterType] = useState("");
   const [filterDueDateStart, setFilterDueDateStart] = useState("");
@@ -128,7 +133,44 @@ const Assignments = () => {
   };
 
   // Report download handler
-  const handleDownloadReport = async (assignmentId) => {
+  const handleDownloadReport = async (assignmentId, isRetry = false) => {
+    // Validate inputs
+    if (!assignmentId) {
+      setAlert({
+        open: true,
+        message: "Invalid assignment ID",
+        severity: "error",
+      });
+      return;
+    }
+    if (!token) {
+      setAlert({
+        open: true,
+        message: "Authentication token missing. Please log in again.",
+        severity: "error",
+      });
+      return;
+    }
+
+    // Initialize retry count if not exists
+    const currentRetryCount = retryCounts[assignmentId] || 0;
+    const maxRetries = 3;
+
+    if (currentRetryCount >= maxRetries) {
+      setAlert({
+        open: true,
+        message: `Failed to download report for Assignment ${assignmentId} after ${maxRetries} attempts. Please contact support.`,
+        severity: "error",
+      });
+      return;
+    }
+
+    // Delay retry to avoid spamming server
+    if (isRetry) {
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second delay
+    }
+
+    setDownloading(assignmentId);
     try {
       const response = await apiClient.get(
         `/submission/assignments/${assignmentId}/report/`,
@@ -137,8 +179,14 @@ const Assignments = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeout: 10000, // 10-second timeout
         }
       );
+
+      // Verify response is PDF
+      if (response.data.type !== "application/pdf") {
+        throw new Error("Unexpected response format. Expected PDF.");
+      }
 
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
@@ -147,12 +195,87 @@ const Assignments = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
       setAlert({
         open: true,
-        message: "Failed to download report",
-        severity: "error",
+        message: `Report for Assignment ${assignmentId} downloaded successfully`,
+        severity: "success",
       });
+      // Reset retry count on success
+      setRetryCounts((prev) => ({ ...prev, [assignmentId]: 0 }));
+    } catch (error) {
+      let errorMessage = `Failed to download report for Assignment ${assignmentId}. Please try again.`;
+      let retryAction = () => {
+        setRetryCounts((prev) => ({
+          ...prev,
+          [assignmentId]: (prev[assignmentId] || 0) + 1,
+        }));
+        handleDownloadReport(assignmentId, true);
+      };
+
+      // Handle JSON error response
+      if (error.response && error.response.data) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const json = JSON.parse(reader.result);
+            errorMessage = json.error
+              ? `Assignment ${assignmentId}: ${json.error}`
+              : errorMessage;
+            // Disable retry for permanent errors
+            if (
+              error.response.status === 400 ||
+              error.response.status === 403 ||
+              error.response.status === 404
+            ) {
+              retryAction = null;
+            }
+          } catch (e) {
+            console.warn("Failed to parse error response:", e);
+          }
+          setAlert({
+            open: true,
+            message: errorMessage,
+            severity: "error",
+            retryAction,
+          });
+        };
+        reader.onerror = () => {
+          setAlert({
+            open: true,
+            message: errorMessage,
+            severity: "error",
+            retryAction,
+          });
+        };
+        reader.readAsText(error.response.data);
+      } else {
+        // Handle network or timeout errors
+        errorMessage =
+          error.code === "ECONNABORTED"
+            ? `Request timed out for Assignment ${assignmentId}. Please try again.`
+            : error.message === "Network Error"
+              ? `Network error for Assignment ${assignmentId}. Please check your connection.`
+              : error.message;
+        setAlert({
+          open: true,
+          message: errorMessage,
+          severity: "error",
+          retryAction,
+        });
+      }
+
+      // Enhanced logging
+      console.error("Download report error:", {
+        assignmentId,
+        status: error.response?.status,
+        message: error.message,
+        responseType: error.response?.data?.type,
+        responseSize: error.response?.data?.size,
+        headers: error.response?.headers,
+        retryCount: currentRetryCount + 1,
+      });
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -196,6 +319,18 @@ const Assignments = () => {
       setAlert({ open: true, message: "Update failed", severity: "error" });
     }
   };
+
+  // Snackbar action for retry
+  const snackbarAction = alert.retryAction ? (
+    <Button
+      color="inherit"
+      size="small"
+      onClick={alert.retryAction}
+      startIcon={<RetryIcon />}
+    >
+      Retry
+    </Button>
+  ) : null;
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
@@ -283,10 +418,14 @@ const Assignments = () => {
 
       <Snackbar
         open={alert.open}
-        autoHideDuration={6000}
+        autoHideDuration={8000} // Longer duration for user to read
         onClose={() => setAlert({ ...alert, open: false })}
+        action={snackbarAction}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }} // More visible
       >
-        <Alert severity={alert.severity}>{alert.message}</Alert>
+        <Alert severity={alert.severity} action={snackbarAction}>
+          {alert.message}
+        </Alert>
       </Snackbar>
 
       {/* Delete Confirmation Dialog */}
@@ -382,13 +521,34 @@ const Assignments = () => {
                     {new Date(assignment.end_date).toLocaleDateString()}
                   </TableCell>
                   <TableCell sx={{ textAlign: "center" }}>
-                    <Tooltip title="Download Report">
-                      <IconButton
-                        onClick={() => handleDownloadReport(assignment.id)}
-                        color="primary"
-                      >
-                        <DownloadIcon />
-                      </IconButton>
+                    <Tooltip
+                      title={
+                        downloading === assignment.id
+                          ? "Downloading report..."
+                          : retryCounts[assignment.id] >= 3
+                            ? "Download failed. Contact support."
+                            : "Download Report"
+                      }
+                    >
+                      <span>
+                        <IconButton
+                          onClick={() => handleDownloadReport(assignment.id)}
+                          color="primary"
+                          disabled={downloading === assignment.id}
+                          sx={{
+                            opacity: downloading === assignment.id ? 0.5 : 1,
+                            "&:disabled": {
+                              backgroundColor: "rgba(0, 0, 0, 0.1)",
+                            },
+                          }}
+                        >
+                          {downloading === assignment.id ? (
+                            <CircularProgress size={28} />
+                          ) : (
+                            <DownloadIcon fontSize="large" />
+                          )}
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </TableCell>
                   <TableCell sx={{ textAlign: "center" }}>

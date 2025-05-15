@@ -25,6 +25,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   InsertDriveFile as FileIcon,
+  Warning as WarningIcon,
 } from "@mui/icons-material";
 import apiClient from "../../services/api";
 
@@ -74,7 +75,7 @@ const Submissions = () => {
 
         // Fetch intakes
         setLoading((prev) => ({ ...prev, intakes: true }));
-        const intakeResponse = await apiClient.get('/student/intakes/');
+        const intakeResponse = await apiClient.get('student/intakes/');
         const fetchedIntakes = Array.isArray(intakeResponse.data.intakes)
           ? intakeResponse.data.intakes
           : [];
@@ -86,7 +87,7 @@ const Submissions = () => {
           fetchedIntakes.map(async (intake) => {
             try {
               const intakeCoursesResponse = await apiClient.get(
-                `/courses/intakes/${intake.id}/courses/`
+                `courses/intakes/${intake.id}/courses/`
               );
               fetchedIntakeCourses[intake.id] = Array.isArray(intakeCoursesResponse.data)
                 ? intakeCoursesResponse.data
@@ -133,7 +134,7 @@ const Submissions = () => {
     fetchTracksAndCourses();
   }, [instructorId]);
 
-  // Fetch assignments when track and course are selected
+  // Fetch assignments when track and course are selected  
   useEffect(() => {
     const fetchAssignments = async () => {
       if (!selectedTrack || !selectedCourse) return;
@@ -156,7 +157,7 @@ const Submissions = () => {
   // Fetch submission status
   const fetchSubmissionStatus = async (assignmentId) => {
     try {
-      setLoading((prev) => ({ ...prev, submissions: true }));
+      setLoading((prev) => ({ ...prev, submissions: true }))
       const response = await apiClient.get(
         `assignments/${assignmentId}/track/${selectedTrack}/course/${selectedCourse}/submitters/`
       );
@@ -185,10 +186,19 @@ const Submissions = () => {
               }
             } catch (submissionError) {
               console.warn(`No submission found for student ${student.student_id}:`, submissionError);
+              return {
+                ...student,
+                submitted: false,
+                submission_id: null,
+                submission_date: null,
+                file_url: null,
+                existingGrade: null,
+                error: `Failed to fetch submission: ${submissionError.response?.data?.error || submissionError.message}`,
+              };
             }
 
             // Check for valid submission or existing grade
-            const hasValidSubmission = !!submission.id || !!submission.submission_id || !!submission.submission_time;
+            const hasValidSubmission = !!submission.id || !!submission.submission_id || !!submission.submission_time || !!submission.file_url;
             const submissionId = submission.id || submission.submission_id || null;
 
             let existingGrade = null;
@@ -204,11 +214,12 @@ const Submissions = () => {
 
             return {
               ...student,
-              submitted: hasValidSubmission || !!existingGrade, // Preserve submitted status if graded
+              submitted: hasValidSubmission || !!existingGrade, // Preserve submitted status if graded or file_url exists
               submission_id: submissionId,
               submission_date: submission.submission_time || null,
               file_url: submission.file_url || null,
               existingGrade,
+              error: null,
             };
           } catch (err) {
             console.error(`Error processing student ${student.student_id}:`, err);
@@ -219,20 +230,33 @@ const Submissions = () => {
               submission_date: null,
               file_url: null,
               existingGrade: null,
+              error: `Processing error: ${err.message}`,
             };
           }
         })
       );
 
-      // Calculate counts based on dataWithGrades
-      const submittedCount = dataWithGrades.filter(s => s.submitted).length;
-      const notSubmittedCount = (response.data.non_submitters?.length || 0) + (dataWithGrades.length - submittedCount);
-
+      // Log all processed students for debugging
       console.debug('Processed Students:', {
         dataWithGrades,
+        submitters: response.data.submitters,
+        nonSubmitters: response.data.non_submitters,
+      });
+
+      // Include errored students in submitters
+      const erroredStudents = dataWithGrades.filter(s => s.error);
+      if (erroredStudents.length > 0) {
+        console.warn('Students with submission errors:', erroredStudents);
+        setError(`Some student submissions could not be fetched. Check console for details.`);
+      }
+
+      // Calculate counts
+      const submittedCount = dataWithGrades.filter(s => s.submitted).length;
+      const notSubmittedCount = (response.data.non_submitters?.length || 0) + (dataWithGrades.filter(s => !s.submitted).length);
+
+      console.debug('Submission Counts:', {
         submittedCount,
         notSubmittedCount,
-        nonSubmitters: response.data.non_submitters,
       });
 
       const evaluations = {};
@@ -470,13 +494,14 @@ const Submissions = () => {
       file_url: null,
       submission_id: null,
       existingGrade: null,
+      error: null,
     })),
   ];
 
   const filteredStudents = mergedStudents.filter((student) =>
     statusFilter === "all"
       ? true
-      : statusFilter === "submitted"
+      : statusFilter === " submitted"
         ? student.submitted
         : !student.submitted
   );
@@ -600,9 +625,17 @@ const Submissions = () => {
                     <Typography>{student.name}</Typography>
                     <Chip
                       label={student.submitted ? "Submitted" : "Not Submitted"}
-                      color={student.submitted ? "success" : "error"}
-                      icon={student.submitted ? <CheckCircleIcon /> : <CancelIcon />}
+                      color={student.submitted ? "success" : student.error ? "warning" : "error"}
+                      icon={
+                        student.submitted ? <CheckCircleIcon /> :
+                          student.error ? <WarningIcon /> : <CancelIcon />
+                      }
                     />
+                    {student.error && (
+                      <Typography variant="caption" color="error">
+                        Submission Error
+                      </Typography>
+                    )}
                   </Box>
                   <Typography variant="body2" color="text.secondary">
                     {student.email}
@@ -633,7 +666,9 @@ const Submissions = () => {
                         )}
                       </>
                     ) : (
-                      <Typography color="text.secondary">No submission found</Typography>
+                      <Typography color="text.secondary">
+                        {student.error ? "Submission data unavailable due to error" : "No submission found"}
+                      </Typography>
                     )}
                   </Grid>
 
@@ -698,7 +733,7 @@ const Submissions = () => {
                           multiline
                           rows={3}
                           label="Feedback"
-                          value="No submission available"
+                          value={student.error ? "Submission error - cannot evaluate" : "No submission available"}
                           disabled
                           sx={{ mb: 2 }}
                         />
