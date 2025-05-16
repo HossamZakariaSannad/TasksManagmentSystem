@@ -287,7 +287,7 @@ const CreateAssignment = () => {
       }
 
       try {
-        const response = await fetch("import.meta.env.VITE_API_URL/api/chatAI/", {
+        const response = await fetch("https://task-project-backend-1hx7.onrender.com/api/chatAI/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: recommendationDialog.chatInput }),
