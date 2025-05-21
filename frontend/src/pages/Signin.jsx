@@ -9,8 +9,8 @@ import {
 } from '@mui/material';
 import { Lock, Email, School, Work } from '@mui/icons-material';
 import apiClient from '../services/api';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
-console.log(import.meta.env.VITE_API_URL);
 
 const AnimatedPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -64,7 +64,6 @@ export default function SignIn() {
   const [resetError, setResetError] = useState('');
 
   useEffect(() => {
-    // Clear any stale auth data
     localStorage.removeItem('authToken');
     localStorage.removeItem('userType');
     localStorage.removeItem('role');
@@ -117,7 +116,6 @@ export default function SignIn() {
 
     console.log('Form state:', { email, password, intakeId, tab });
 
-    // Validate intakeId for student login
     if (tab === 'student') {
       const error = validateIntakeId(intakeId);
       if (error) {
@@ -136,30 +134,17 @@ export default function SignIn() {
     };
 
     console.log('Login payload:', JSON.stringify(payload, null, 2));
-    console.log('Payload types:', {
-      email: typeof payload.email,
-      password: typeof payload.password,
-      intake_id: typeof payload.intake_id,
-    });
-
     try {
       const result = await dispatch(loginUser(payload)).unwrap();
       console.log('Login result:', JSON.stringify(result, null, 2));
       setLoading(false);
       const { userType, role } = result;
-      console.log('Navigating with:', { userType, role });
-      // Verify token was stored
-      const storedToken = localStorage.getItem('authToken');
-      console.log('Stored authToken:', storedToken ? 'Present' : 'Missing');
       if (userType === 'student') navigate('/student/dashboard');
       else if (role === 'instructor') navigate('/instructor/dashboard');
       else if (role === 'supervisor') navigate('/supervisor/dashboard');
       else if (role === 'branch_manager') navigate('/branchmanager/dashboard');
       else if (role === 'admin') navigate('/admin/dashboard');
-      else {
-        console.warn('Unknown userType or role, redirecting to /');
-        navigate('/');
-      }
+      else navigate('/');
     } catch (error) {
       console.error('Login error:', JSON.stringify(error, null, 2));
       const err = error.error || error.detail || error.message || 'Login failed';
@@ -196,8 +181,16 @@ export default function SignIn() {
   const verifyOtp = async () => {
     setResetError('');
     setResetMsg('');
+    if (!/^\d{4}$/.test(otp)) {
+      setResetError('OTP must be a 4-digit number.');
+      return;
+    }
     try {
-      const payload = { email: email.trim().toLowerCase(), otp };
+      const payload = {
+        email: email.trim().toLowerCase(),
+        otp,
+        intake_id: tab === 'student' ? parseInt(intakeId, 10) : null
+      };
       console.log('OTP verify payload:', JSON.stringify(payload, null, 2));
       await apiClient.post('/auth/password-reset-verify/', payload);
       setOtpVerified(true);
@@ -211,23 +204,29 @@ export default function SignIn() {
 
   const confirmReset = async () => {
     setResetError('');
+    setResetMsg('');
     if (newPassword !== confirmPassword) {
       setResetError("Passwords don't match.");
       return;
     }
+    if (newPassword.length < 8) {
+      setResetError('Password must be at least 8 characters long.');
+      return;
+    }
     try {
-      const payload = { email: email.trim().toLowerCase(), otp, new_password: newPassword };
+      const payload = {
+        email: email.trim().toLowerCase(),
+        otp,
+        new_password: newPassword,
+        intake_id: tab === 'student' ? parseInt(intakeId, 10) : null
+      };
       console.log('Password reset confirm payload:', JSON.stringify(payload, null, 2));
       await apiClient.post('/auth/password-reset-confirm/', payload);
-      alert('Password reset successful! Please sign in.');
-      backToSignIn();
+      setResetMsg('Password reset successful! Please sign in.');
+      setTimeout(backToSignIn, 2000);
     } catch (e) {
       const data = e.response?.data || {};
-      const msg =
-        data.detail ||
-        (Array.isArray(data.new_password) ? data.new_password.join(', ') :
-         typeof data.new_password === 'string' ? data.new_password :
-         JSON.stringify(data));
+      const msg = data.detail || data.new_password?.join(', ') || 'Failed to reset password.';
       console.error('Password reset confirm error:', msg);
       setResetError(msg);
     }
@@ -420,7 +419,7 @@ export default function SignIn() {
                   <Button
                     variant="contained"
                     onClick={verifyOtp}
-                    disabled={!otp}
+                    disabled={!otp || !/^\d{4}$/.test(otp)}
                     sx={{
                       borderRadius: 8,
                       backgroundColor: 'rgba(211,47,47,0.9)',
@@ -454,6 +453,7 @@ export default function SignIn() {
                   <Button
                     variant="contained"
                     onClick={confirmReset}
+                    disabled={!newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 8}
                     sx={{
                       borderRadius: 8,
                       backgroundColor: 'rgba(211,47,47,0.9)',
