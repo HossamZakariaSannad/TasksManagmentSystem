@@ -278,21 +278,19 @@ class AssignmentStudentDetailView(APIView):
 
 class AssignmentReportView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request, pk, format=None):
         try:
             assignment = Assignment.objects.prefetch_related(
-                'assignmentstudent_set__student',
-                'assignmentstudent_set__course',
-                'assignmentstudent_set__track'
+                'assignment_students__student',
+                'assignment_students__course',
+                'assignment_students__track'
             ).get(id=pk)
 
-            # Get all grades for this assignment
+            # Rest of the code remains the same
             grades = Grade.objects.filter(assignment=assignment).select_related('student')
-
-            # Map grades by student ID for quick lookup
             grade_map = {grade.student_id: grade for grade in grades}
 
-            # Create PDF buffer
             buffer = BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter)
             styles = getSampleStyleSheet()
@@ -322,7 +320,7 @@ class AssignmentReportView(APIView):
 
             # --- Student Grades Table ---
             student_data = [['Student', 'Track', 'Course', 'Score', 'Graded At', 'Feedback']]
-            for as_student in sorted(assignment.assignmentstudent_set.all(), key=lambda s: s.student.full_name):
+            for as_student in sorted(assignment.assignment_students.all(), key=lambda s: s.student.full_name):
                 student = as_student.student
                 grade = grade_map.get(student.id)
 
@@ -336,8 +334,8 @@ class AssignmentReportView(APIView):
                 ])
 
             student_table = Table(student_data,
-                                colWidths=[120, 100, 80, 60, 80, 140],
-                                repeatRows=1)
+                                 colWidths=[120, 100, 80, 60, 80, 140],
+                                 repeatRows=1)
             student_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4472C4')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
