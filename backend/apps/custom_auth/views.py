@@ -171,40 +171,53 @@ class PasswordResetVerifyView(APIView):
         ser.is_valid(raise_exception=True)
         email = ser.validated_data['email']
         otp = ser.validated_data['otp']
-        logger.debug(f"Verifying OTP for email={email}")
+        intake_id = ser.validated_data.get('intake_id')  # Changed to intake_id
+        logger.debug(f"Verifying OTP for email={email}, intake_id={intake_id if intake_id else 'N/A'}")
 
         user = None
+        user_model = None
         try:
-            for model in (Student, StaffMember):
-                try:
-                    users = model.objects.filter(email=email)
-                    logger.debug(f"Found {users.count()} users in {model.__name__} for email='{email}'")
-                    if users.count() > 1:
-                        logger.warning(f"Multiple {model.__name__} found for email='{email}': {users.count()} records")
-                        for u in users:
-                            logger.debug(f" - {model.__name__} ID: {u.id}, Username: {u.username}")
-                    user = users.first()
-                    if user:
-                        logger.debug(f"Selected user in {model.__name__}: ID={user.id}, Username={user.username}")
-                        break
-                except Exception as e:
-                    logger.error(f"Error querying {model.__name__} for email='{email}': {str(e)}")
-                    continue
+            if intake_id:
+                students = Student.objects.filter(email=email, intake_id=intake_id)
+                logger.debug(f"Found {students.count()} Student records for email='{email}', intake_id={intake_id}")
+                if students.count() > 1:
+                    logger.error(f"Multiple Student records found for email='{email}', intake_id={intake_id}: {students.count()} records")
+                    return Response(
+                        {"detail": "Multiple accounts found for this email and intake. Contact support."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                user = students.first()
+                if user:
+                    user_model = "Student"
+                    logger.debug(f"Selected Student: ID={user.id}, Username={user.username}")
+            if not user:
+                staff = StaffMember.objects.filter(email=email)
+                logger.debug(f"Found {staff.count()} StaffMember records for email='{email}'")
+                if staff.count() > 1:
+                    logger.error(f"Multiple StaffMember records found for email='{email}': {staff.count()} records")
+                    return Response(
+                        {"detail": "Multiple staff accounts found for this email. Contact support."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                user = staff.first()
+                if user:
+                    user_model = "StaffMember"
+                    logger.debug(f"Selected StaffMember: ID={user.id}, Username={user.username}")
         except Exception as e:
-            logger.error(f"Error during user lookup for email='{email}': {str(e)}")
-            raise AuthenticationFailed("No account found with that email.")
+            logger.error(f"Error querying users for email='{email}', intake_id={intake_id if intake_id else 'N/A'}: {str(e)}")
+            return Response({"detail": "Error processing request."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user:
-            logger.warning(f"No account found for email='{email}'")
-            raise AuthenticationFailed("No account found with that email.")
+            logger.warning(f"No account found for email='{email}', intake_id={intake_id if intake_id else 'N/A'}")
+            raise AuthenticationFailed("No account found with that email and intake.")
 
-        if cache.get(f"pwdreset_{email}_{user.id}") != otp:
-            logger.warning(f"Invalid or expired OTP for email={email}")
+        cache_key = f"pwdreset_{email}_{user.id}"
+        if cache.get(cache_key) != otp:
+            logger.warning(f"Invalid or expired OTP for email={email}, cache_key={cache_key}")
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
 
-        logger.debug(f"OTP verified for email={email}")
+        logger.debug(f"OTP verified for email={email}, {user_model} ID={user.id}")
         return Response({"detail": "OTP verified."}, status=status.HTTP_200_OK)
-
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
 
@@ -214,44 +227,61 @@ class PasswordResetConfirmView(APIView):
 
         email = ser.validated_data['email']
         otp = ser.validated_data['otp']
-        new_pw = ser.validated_data['new_password']
-        logger.debug(f"Confirming password reset for email={email}")
+        new_password = ser.validated_data['new_password']
+        intake_id = ser.validated_data.get('intake_id')  # Changed to intake_id
+        logger.debug(f"Confirming password reset for email={email}, intake_id={intake_id if intake_id else 'N/A'}")
 
         user = None
+        user_model = None
         try:
-            for model in (Student, StaffMember):
-                try:
-                    users = model.objects.filter(email=email)
-                    logger.debug(f"Found {users.count()} users in {model.__name__} for email='{email}'")
-                    if users.count() > 1:
-                        logger.warning(f"Multiple {model.__name__} found for email='{email}': {users.count()} records")
-                        for u in users:
-                            logger.debug(f" - {model.__name__} ID: {u.id}, Username: {u.username}")
-                    user = users.first()
-                    if user:
-                        logger.debug(f"Selected user in {model.__name__}: ID={user.id}, Username={user.username}")
-                        break
-                except Exception as e:
-                    logger.error(f"Error querying {model.__name__} for email='{email}': {str(e)}")
-                    continue
+            if intake_id:
+                students = Student.objects.filter(email=email, intake_id=intake_id)
+                logger.debug(f"Found {students.count()} Student records for email='{email}', intake_id={intake_id}")
+                if students.count() > 1:
+                    logger.error(f"Multiple Student records found for email='{email}', intake_id={intake_id}: {students.count()} records")
+                    return Response(
+                        {"detail": "Multiple accounts found for this email and intake. Contact support."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                user = students.first()
+                if user:
+                    user_model = "Student"
+                    logger.debug(f"Selected Student: ID={user.id}, Username={user.username}")
+            if not user:
+                staff = StaffMember.objects.filter(email=email)
+                logger.debug(f"Found {staff.count()} StaffMember records for email='{email}'")
+                if staff.count() > 1:
+                    logger.error(f"Multiple StaffMember records found for email='{email}': {staff.count()} records")
+                    return Response(
+                        {"detail": "Multiple staff accounts found for this email. Contact support."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                user = staff.first()
+                if user:
+                    user_model = "StaffMember"
+                    logger.debug(f"Selected StaffMember: ID={user.id}, Username={user.username}")
         except Exception as e:
-            logger.error(f"Error during user lookup for email='{email}': {str(e)}")
-            raise AuthenticationFailed("No account found with that email.")
+            logger.error(f"Error querying users for email='{email}', intake_id={intake_id if intake_id else 'N/A'}: {str(e)}")
+            return Response({"detail": "Error processing request."}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user:
-            logger.warning(f"No account found for email='{email}'")
-            raise AuthenticationFailed("No account found with that email.")
+            logger.warning(f"No account found for email='{email}', intake_id={intake_id if intake_id else 'N/A'}")
+            raise AuthenticationFailed("No account found with that email and intake.")
 
-        if cache.get(f"pwdreset_{email}_{user.id}") != otp:
-            logger.warning(f"Invalid or expired OTP for email={email}")
+        cache_key = f"pwdreset_{email}_{user.id}"
+        if cache.get(cache_key) != otp:
+            logger.warning(f"Invalid or expired OTP for email={email}, cache_key={cache_key}")
             return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.set_password(new_pw)
-        user.save()
-        cache.delete(f"pwdreset_{email}_{user.id}")
-        logger.debug(f"Password reset successful for email={email}")
-        return Response({"detail": "Password reset successful."}, status=status.HTTP_200_OK)
-
+        try:
+            user.set_password(new_password)
+            user.save()
+            cache.delete(cache_key)
+            logger.debug(f"Password reset successful for email={email}, {user_model} ID={user.id}")
+            return Response({"detail": "Password reset successful."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error(f"Error saving password for email={email}, {user_model} ID={user.id}: {str(e)}")
+            return Response({"detail": "Failed to reset password."}, status=status.HTTP_400_BAD_REQUEST)
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
     permission_classes = [AllowAny]

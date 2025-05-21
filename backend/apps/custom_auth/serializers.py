@@ -9,6 +9,7 @@ from apps.staff_members.models import StaffMember
 from apps.custom_auth.backends import MultiModelAuthBackend
 import logging
 
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -187,24 +188,18 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 class PasswordResetVerifySerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField()
+    intake_id = serializers.PrimaryKeyRelatedField(queryset=Intake.objects.all())  # Add intake field
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    otp = serializers.CharField()
-    new_password = serializers.CharField(write_only=True)
-
-    def validate_new_password(self, value):
-        email = self.initial_data.get('email')
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError("No account found with that email.")
-
-        try:
-            validate_password(value, user)
-        except DjangoValidationError as e:
-            raise serializers.ValidationError(e.messages)
-        return value
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    intake_id = serializers.PrimaryKeyRelatedField(queryset=Intake.objects.all(), required=False)
 
     def validate(self, data):
+        new_password = data.get('new_password')
+        try:
+            validate_password(new_password)  # Validate password without user context
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"new_password": e.messages})
         return data
