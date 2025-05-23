@@ -44,7 +44,7 @@ const teamMembers = [
     name: "Khaled Sherif",
     role: "Full Stack Developer",
     description:
-      "Khaled works closely with the development team to ensure our content is clear, concise, and accessible. He drives the content strategy and ensures its alignment with project goals.",
+      "Khaled works closely with the development team to ensure our content is clear and accessible. He drives the content strategy and ensures its alignment with project goals.",
     image: khaled,
     socialLinks: {
       linkedin: "https://www.linkedin.com/in/khaled-sherif1/",
@@ -83,7 +83,10 @@ const teamMembers = [
 const Team = () => {
   return (
     <section id="team" className="team section">
-      <div className="container section-title d-flex flex-column" data-aos="fade-up">
+      <div
+        className="container section-title d-flex flex-column"
+        data-aos="fade-up"
+      >
         <span>Our Team</span>
         <h2>Meet the Team</h2>
         <p>

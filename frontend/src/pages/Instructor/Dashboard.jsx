@@ -25,6 +25,8 @@ import Submissions from "./Submissions";
 import Grades from "./Grades";
 import CreateAssignment from "./CreateAssignment";
 import OpeningPage from "./OpeningPage";
+import ChatRoomView from '../../Components/Chat/ChatRoomView';
+import ChatRoomList from '../../Components/Chat/ChatRoomList';
 
 const DashboardContainer = styled(Box)({
   display: "flex",
@@ -38,11 +40,11 @@ const SidebarWrapper = styled(Box)(({ theme, open }) => ({
   position: "sticky",
   top: 0,
   transition: theme.transitions.create("width"),
-  backgroundColor: '#333', // Changed to #333
+  backgroundColor: "#1e1e1e", // Changed to #1e1e1e
   boxShadow: theme.shadows[4],
   zIndex: theme.zIndex.appBar,
   color: theme.palette.common.white, // Ensure text/icons are readable
-  '& svg': {
+  "& svg": {
     color: theme.palette.common.white, // Ensure icons are white
   },
 }));
@@ -111,12 +113,36 @@ const InstructorDashboard = () => {
   }, [isMobile]);
 
   const menuItems = [
-    { text: "My Courses", icon: <FiBook size={20} />, path: "/instructor/dashboard/courses" },
-    { text: "Assignments", icon: <FiCalendar size={20} />, path: "/instructor/dashboard/assignments" },
-    { text: "Create Assignment", icon: <FiClipboard size={20} />, path: "/instructor/dashboard/create-assignment" },
-    { text: "Submissions", icon: <FiUploadCloud size={20} />, path: "/instructor/dashboard/submissions" },
-    { text: "Grades & Feedbacks", icon: <FiAward size={20} />, path: "/instructor/dashboard/grades" },
-    { text: 'Chat', icon: <FiMessageCircle />, path: '/instructor/dashboard/chat' },
+    {
+      text: "My Courses",
+      icon: <FiBook size={20} />,
+      path: "/instructor/dashboard/courses",
+    },
+    {
+      text: "Assignments",
+      icon: <FiCalendar size={20} />,
+      path: "/instructor/dashboard/assignments",
+    },
+    {
+      text: "Create Assignment",
+      icon: <FiClipboard size={20} />,
+      path: "/instructor/dashboard/create-assignment",
+    },
+    {
+      text: "Submissions",
+      icon: <FiUploadCloud size={20} />,
+      path: "/instructor/dashboard/submissions",
+    },
+    {
+      text: "Grades & Feedbacks",
+      icon: <FiAward size={20} />,
+      path: "/instructor/dashboard/grades",
+    },
+    {
+      text: "Chat",
+      icon: <FiMessageCircle />,
+      path: "/instructor/dashboard/chat",
+    },
   ];
   const displayName = username ? username.split("@")[0] : "Instructor";
 
@@ -186,6 +212,8 @@ const InstructorDashboard = () => {
             <Route path="create-assignment" element={<CreateAssignment />} />
             <Route path="submissions" element={<Submissions />} />
             <Route path="grades" element={<Grades />} />
+            <Route path="chat" element={<ChatRoomList />} />
+            <Route path="chat/rooms/:roomId" element={<ChatRoomView />} />
           </Routes>
         </ContentCard>
       </MainContent>

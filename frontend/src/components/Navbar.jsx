@@ -47,8 +47,8 @@ const NavButton = styled(Button)(({ theme }) => ({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   "&.active": {
-    backgroundColor: "#d32f2f", // Blood red for active state
-    color: theme.palette.getContrastText("#d32f2f"),
+    backgroundColor: "#1976d2", // Blood red for active state
+    color: theme.palette.getContrastText("#1976d2"),
   },
 }));
 
@@ -98,13 +98,6 @@ const Navbar = () => {
             >
               Supervisor Dashboard
             </NavButton>
-            <NavButton
-              component={Link}
-              to="/supervisor/reports"
-              startIcon={<FileText size={18} />}
-            >
-              Reports
-            </NavButton>
           </>
         );
       case "student":
@@ -126,7 +119,7 @@ const Navbar = () => {
             </NavButton>
           </>
         );
-      case "branchmanager":
+      case "branch_manager":
         return (
           <>
             <NavButton
@@ -134,14 +127,19 @@ const Navbar = () => {
               to="/branchmanager/dashboard"
               startIcon={<Grid size={18} />}
             >
-              Branch Overview
+              Branch Dashboard
             </NavButton>
+          </>
+        );
+      case "admin":
+        return (
+          <>
             <NavButton
               component={Link}
-              to="/branchmanager/staff"
-              startIcon={<UsersIcon size={18} />}
+              to="/admin/dashboard"
+              startIcon={<BarChart2 size={18} />}
             >
-              Staff Management
+              Dashboard
             </NavButton>
           </>
         );
@@ -177,10 +175,10 @@ const Navbar = () => {
             sx={{
               mr: 2,
               fontWeight: 700,
-              color: "#d32f2f",
+              color: "#1976d2",
               textDecoration: "none",
               "&:hover": {
-                color: "#b71c1c",
+                color: "#155da4",
               },
             }}
           >
@@ -190,10 +188,18 @@ const Navbar = () => {
           <NavButton component={Link} to="/" startIcon={<Home size={18} />}>
             Home
           </NavButton>
-          <NavButton component={Link} to="/services" startIcon={<Briefcase size={18} />}>
+          <NavButton
+            component={Link}
+            to="/services"
+            startIcon={<Briefcase size={18} />}
+          >
             Services
           </NavButton>
-          <NavButton component={Link} to="/about" startIcon={<Info size={18} />}>
+          <NavButton
+            component={Link}
+            to="/about"
+            startIcon={<Info size={18} />}
+          >
             AboutUs
           </NavButton>
 
@@ -217,7 +223,7 @@ const Navbar = () => {
                   sx={{
                     width: 32,
                     height: 32,
-                    bgcolor: "#d32f2f", // Blood red
+                    bgcolor: "#1976d2", // Blood red
                     color: "white",
                   }}
                 >
@@ -269,7 +275,7 @@ const Navbar = () => {
                   onClick={() => navigate("/profile")}
                   sx={{
                     "&:hover": {
-                      backgroundColor: "rgba(211, 47, 47, 0.1)", // Semi-transparent blood red
+                      backgroundColor: "rgba(25, 118, 210, 0.1)",
                     },
                   }}
                 >
@@ -283,7 +289,7 @@ const Navbar = () => {
                   onClick={handleLogout}
                   sx={{
                     "&:hover": {
-                      backgroundColor: "rgba(211, 47, 47, 0.1)", // Semi-transparent blood red
+                      backgroundColor: "rgba(25, 118, 210, 0.1)",
                     },
                   }}
                 >

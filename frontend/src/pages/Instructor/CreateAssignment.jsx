@@ -61,7 +61,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { isValidUrl } from "../../../utils/validation";
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://task-project-backend-1hx7.onrender.com";
 const steps = ["Basic Info", "Assignment Target", "Review"];
 
 const SimpleButton = styled(Button)(({ theme }) => ({
@@ -172,9 +174,13 @@ const CreateAssignment = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
   const { user_id, role } = useSelector((state) => state.auth);
-  const { tracks, courses: assignmentCourses, students, loading, error } = useSelector(
-    (state) => state.createassignments
-  );
+  const {
+    tracks,
+    courses: assignmentCourses,
+    students,
+    loading,
+    error,
+  } = useSelector((state) => state.createassignments);
   const {
     userCourses: { track_courses, courses: myCourses },
     status: { fetchCoursesLoading, fetchCoursesError },
@@ -226,20 +232,24 @@ const CreateAssignment = () => {
     const courseMap = new Map();
     let sourceCourses = [];
 
-    if (role === 'supervisor') {
-      sourceCourses = (track_courses && track_courses.length > 0)
-        ? track_courses
-        : (myCourses || []);
-    } else if (role === 'instructor') {
+    if (role === "supervisor") {
+      sourceCourses =
+        track_courses && track_courses.length > 0
+          ? track_courses
+          : myCourses || [];
+    } else if (role === "instructor") {
       const instructorTrackCourses = (track_courses || []).filter(
-        course => course.instructor?.id === user_id
+        (course) => course.instructor?.id === user_id
       );
-      sourceCourses = instructorTrackCourses.length > 0
-        ? instructorTrackCourses
-        : (myCourses || []).filter(course => course.instructor?.id === user_id);
+      sourceCourses =
+        instructorTrackCourses.length > 0
+          ? instructorTrackCourses
+          : (myCourses || []).filter(
+              (course) => course.instructor?.id === user_id
+            );
     }
 
-    sourceCourses.forEach(course => {
+    sourceCourses.forEach((course) => {
       if (!courseMap.has(course.id)) {
         courseMap.set(course.id, {
           ...course,
@@ -247,8 +257,8 @@ const CreateAssignment = () => {
         });
       } else {
         const existing = courseMap.get(course.id);
-        const existingTrackIds = new Set(existing.tracks.map(t => t.id));
-        course.tracks?.forEach(track => {
+        const existingTrackIds = new Set(existing.tracks.map((t) => t.id));
+        course.tracks?.forEach((track) => {
           if (!existingTrackIds.has(track.id)) {
             existing.tracks.push(track);
             existingTrackIds.add(track.id);
@@ -259,8 +269,8 @@ const CreateAssignment = () => {
 
     // Filter by selected track
     if (formData.track) {
-      return Array.from(courseMap.values()).filter(course =>
-        course.tracks?.some(track => track.id === formData.track)
+      return Array.from(courseMap.values()).filter((course) =>
+        course.tracks?.some((track) => track.id === formData.track)
       );
     }
     return Array.from(courseMap.values());
@@ -290,7 +300,9 @@ const CreateAssignment = () => {
   // Fetch students when course changes
   const fetchStudentsMemoized = useCallback(() => {
     if (formData.course && formData.track) {
-      const selectedCourse = uniqueCourses.find((c) => c.id === formData.course);
+      const selectedCourse = uniqueCourses.find(
+        (c) => c.id === formData.course
+      );
       const intakeId = selectedCourse?.intake?.id;
       if (intakeId) {
         dispatch(
@@ -325,11 +337,14 @@ const CreateAssignment = () => {
       }
 
       try {
-        const response = await fetch("https://task-project-backend-1hx7.onrender.com/api/chatAI/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: recommendationDialog.chatInput }),
-        });
+        const response = await fetch(
+          "https://task-project-backend-1hx7.onrender.com/api/chatAI/",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: recommendationDialog.chatInput }),
+          }
+        );
 
         const data = await response.json();
         if (response.ok) {
@@ -371,10 +386,16 @@ const CreateAssignment = () => {
     let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
       const course = uniqueCourses.find((c) => c.id === formData.course);
-      const courseName = course ? `${course.name} Intake(${course.intake?.name || 'No Intake'})` : "";
-      url += `&course_name=${encodeURIComponent(courseName)}&difficulty=${encodeURIComponent(formData.difficulty)}`;
+      const courseName = course
+        ? `${course.name} Intake(${course.intake?.name || "No Intake"})`
+        : "";
+      url += `&course_name=${encodeURIComponent(
+        courseName
+      )}&difficulty=${encodeURIComponent(formData.difficulty)}`;
     } else {
-      url += `&brief_description=${encodeURIComponent(recommendationDialog.briefDescription)}`;
+      url += `&brief_description=${encodeURIComponent(
+        recommendationDialog.briefDescription
+      )}`;
     }
 
     try {
@@ -588,7 +609,8 @@ const CreateAssignment = () => {
       setSubmitDialog({
         open: true,
         success: false,
-        message: "Please wait while student data loads or select a valid course with students",
+        message:
+          "Please wait while student data loads or select a valid course with students",
       });
       return;
     }
@@ -664,6 +686,7 @@ const CreateAssignment = () => {
                   label="Due Date"
                   value={formData.due_date}
                   onChange={handleDateChange("due_date")}
+                  sx={{ width: "100%" }}
                   renderInput={(params) => (
                     <StyledTextField
                       {...params}
@@ -675,7 +698,9 @@ const CreateAssignment = () => {
                         ...params.InputProps,
                         startAdornment: (
                           <CalendarIcon
-                            color={validationErrors.due_date ? "error" : "action"}
+                            color={
+                              validationErrors.due_date ? "error" : "action"
+                            }
                             sx={{ mr: 1, opacity: 0.6 }}
                           />
                         ),
@@ -694,6 +719,7 @@ const CreateAssignment = () => {
                   value={formData.end_date}
                   onChange={handleDateChange("end_date")}
                   minDateTime={formData.due_date}
+                  sx={{ width: "100%" }}
                   renderInput={(params) => (
                     <StyledTextField
                       {...params}
@@ -705,7 +731,9 @@ const CreateAssignment = () => {
                         ...params.InputProps,
                         startAdornment: (
                           <CalendarIcon
-                            color={validationErrors.end_date ? "error" : "action"}
+                            color={
+                              validationErrors.end_date ? "error" : "action"
+                            }
                             sx={{ mr: 1, opacity: 0.6 }}
                           />
                         ),
@@ -753,8 +781,13 @@ const CreateAssignment = () => {
                             <SchoolIcon sx={{ fontSize: 14 }} />
                           </Avatar>
                           <Box>
-                            <Typography variant="body2">{track.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="body2">
+                              {track.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {track.description}
                             </Typography>
                           </Box>
@@ -776,7 +809,12 @@ const CreateAssignment = () => {
               <FormControl
                 fullWidth
                 required
-                disabled={!formData.track || loading || fetchCoursesLoading || uniqueCourses.length === 0}
+                disabled={
+                  !formData.track ||
+                  loading ||
+                  fetchCoursesLoading ||
+                  uniqueCourses.length === 0
+                }
                 error={validationErrors.course}
               >
                 <InputLabel sx={{ fontWeight: 500 }}>Course</InputLabel>
@@ -804,13 +842,18 @@ const CreateAssignment = () => {
                             <DescriptionIcon sx={{ fontSize: 14 }} />
                           </Avatar>
                           <Typography variant="body2">
-                            {course.name} {course.intake ? `Intake(${course.intake.name})` : '(No Intake)'}
+                            {course.name}{" "}
+                            {course.intake
+                              ? `Intake(${course.intake.name})`
+                              : "(No Intake)"}
                           </Typography>
                         </Stack>
                       </MenuItem>
                     ))
                   ) : (
-                    <MenuItem disabled>No courses assigned to this track</MenuItem>
+                    <MenuItem disabled>
+                      No courses assigned to this track
+                    </MenuItem>
                   )}
                 </StyledSelect>
                 {validationErrors.course && (
@@ -821,7 +864,11 @@ const CreateAssignment = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={validationErrors.difficulty}>
+              <FormControl
+                fullWidth
+                required
+                error={validationErrors.difficulty}
+              >
                 <InputLabel sx={{ fontWeight: 500 }}>Difficulty</InputLabel>
                 <StyledSelect
                   value={formData.difficulty}
@@ -842,7 +889,9 @@ const CreateAssignment = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel sx={{ fontWeight: 500 }}>Assignment Type</InputLabel>
+                <InputLabel sx={{ fontWeight: 500 }}>
+                  Assignment Type
+                </InputLabel>
                 <StyledSelect
                   value={formData.assignment_type}
                   onChange={handleChange}
@@ -952,7 +1001,10 @@ const CreateAssignment = () => {
                   <Box display="flex" alignItems="center">
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 500, color: theme.palette.text.primary }}
+                      sx={{
+                        fontWeight: 500,
+                        color: theme.palette.text.primary,
+                      }}
                     >
                       Assign to all course students
                     </Typography>
@@ -988,7 +1040,9 @@ const CreateAssignment = () => {
                               : "default"
                           }
                           avatar={
-                            <Avatar sx={{ bgcolor: theme.palette.primary.light }}>
+                            <Avatar
+                              sx={{ bgcolor: theme.palette.primary.light }}
+                            >
                               <PersonIcon sx={{ fontSize: 16 }} />
                             </Avatar>
                           }
@@ -1134,10 +1188,19 @@ const CreateAssignment = () => {
                       </Typography>
                       <Typography variant="body2">
                         {uniqueCourses.find((c) => c.id === formData.course)
-                          ? `${uniqueCourses.find((c) => c.id === formData.course).name} Intake(${uniqueCourses.find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
+                          ? `${
+                              uniqueCourses.find(
+                                (c) => c.id === formData.course
+                              ).name
+                            } Intake(${
+                              uniqueCourses.find(
+                                (c) => c.id === formData.course
+                              ).intake?.name || "No Intake"
+                            })`
                           : "Not selected"}
                         <br />
-                        {tracks.find((t) => t.id === formData.track)?.name || "Not selected"}
+                        {tracks.find((t) => t.id === formData.track)?.name ||
+                          "Not selected"}
                       </Typography>
                     </Box>
                     <Box>
@@ -1152,12 +1215,12 @@ const CreateAssignment = () => {
                         {formData.assignToAll
                           ? `All students (${students?.length || 0}) in course`
                           : formData.selectedStudents.length > 0
-                            ? formData.selectedStudents
+                          ? formData.selectedStudents
                               .map(
                                 (id) => students.find((s) => s.id === id)?.name
                               )
                               .join(", ")
-                            : "No students selected"}
+                          : "No students selected"}
                       </Typography>
                     </Box>
                   </Stack>
@@ -1221,19 +1284,22 @@ const CreateAssignment = () => {
             {error || fetchCoursesError}
           </Alert>
         )}
-        {!(loading || fetchCoursesLoading) && uniqueCourses.length === 0 && formData.track && (
-          <Alert
-            severity="warning"
-            sx={{
-              mb: 2,
-              borderRadius: "8px",
-              fontSize: "0.875rem",
-              bgcolor: theme.palette.warning.light,
-            }}
-          >
-            No courses assigned for the selected track. Please contact an admin to get assigned to a course.
-          </Alert>
-        )}
+        {!(loading || fetchCoursesLoading) &&
+          uniqueCourses.length === 0 &&
+          formData.track && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 2,
+                borderRadius: "8px",
+                fontSize: "0.875rem",
+                bgcolor: theme.palette.warning.light,
+              }}
+            >
+              No courses assigned for the selected track. Please contact an
+              admin to get assigned to a course.
+            </Alert>
+          )}
 
         <Stepper
           activeStep={activeStep}
@@ -1278,7 +1344,14 @@ const CreateAssignment = () => {
           >
             {getStepContent(activeStep)}
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4, gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: 4,
+                gap: 2,
+              }}
+            >
               <Button
                 disabled={activeStep === 0}
                 onClick={handleBack}
@@ -1348,12 +1421,18 @@ const CreateAssignment = () => {
                 fontSize: "1.25rem",
               }}
             >
-              {submitDialog.success ? "Assignment Created" : "Submission Failed"}
+              {submitDialog.success
+                ? "Assignment Created"
+                : "Submission Failed"}
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ textAlign: "center" }}>
             <Typography
-              sx={{ mb: 2, fontSize: "0.875rem", color: theme.palette.text.secondary }}
+              sx={{
+                mb: 2,
+                fontSize: "0.875rem",
+                color: theme.palette.text.secondary,
+              }}
             >
               {submitDialog.message}
             </Typography>
@@ -1535,21 +1614,21 @@ const CreateAssignment = () => {
               )}
               {(recommendationDialog.methodChoice === "1" ||
                 recommendationDialog.methodChoice === "2") && (
-                  <Grid item xs={12}>
-                    <SimpleButton
-                      variant="contained"
-                      onClick={fetchRecommendations}
-                      disabled={
-                        recommendationDialog.methodChoice === "2" &&
-                        !recommendationDialog.briefDescription.trim()
-                      }
-                      fullWidth
-                      sx={{ py: 1 }}
-                    >
-                      Get Recommendations
-                    </SimpleButton>
-                  </Grid>
-                )}
+                <Grid item xs={12}>
+                  <SimpleButton
+                    variant="contained"
+                    onClick={fetchRecommendations}
+                    disabled={
+                      recommendationDialog.methodChoice === "2" &&
+                      !recommendationDialog.briefDescription.trim()
+                    }
+                    fullWidth
+                    sx={{ py: 1 }}
+                  >
+                    Get Recommendations
+                  </SimpleButton>
+                </Grid>
+              )}
             </Grid>
             {recommendationDialog.loading ? (
               <Box

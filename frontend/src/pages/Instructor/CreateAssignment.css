@@ -11,7 +11,7 @@
   .create-assignment h2 {
     text-align: center;
     font-size: 2rem;
-    color: #333;
+    color: #1e1e1e;
     margin-bottom: 20px;
   }
   
@@ -85,7 +85,7 @@
   
   .create-assignment .form-group label {
     font-size: 1rem;
-    color: #333;
+    color: #1e1e1e;
   }
   
   .create-assignment .error {
