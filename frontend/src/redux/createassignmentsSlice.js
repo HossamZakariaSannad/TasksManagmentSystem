@@ -31,43 +31,39 @@ export const fetchCourses = createAsyncThunk(
       const response = await apiClient.get(`/staff/track-and-courses/${userId}/`);
       console.log('fetchCourses API Response:', response.data);
 
-      const trackCourses = Array.isArray(response.data.track_courses)
-        ? response.data.track_courses
+      // Extract courses
+      const courses = Array.isArray(response.data.courses)
+        ? response.data.courses
         : [];
-      const filteredTrackCourses = trackCourses.filter((tc) =>
-        Array.isArray(tc.tracks) && tc.tracks.some((track) => track.id === trackId)
-      );
-      console.log('Filtered Track Courses:', filteredTrackCourses);
-      const courseIds = filteredTrackCourses.map((tc) => tc.id);
 
-      const courses = Array.isArray(response.data.taught_courses)
-        ? response.data.taught_courses
-        : [];
+      // Filter by trackId
       let filteredCourses = courses.filter((course) =>
-        courseIds.includes(course.id)
+        Array.isArray(course.tracks) &&
+        course.tracks.some((track) => track.id === trackId)
       );
       console.log('Filtered Courses (before intake):', filteredCourses);
 
+      // Get all intakes
       const intakeResponse = await apiClient.get('/student/intakes/');
       const intakes = Array.isArray(intakeResponse.data.intakes)
         ? intakeResponse.data.intakes
         : [];
-      console.log('All Intakes:', intakes);
 
+      // Get courses per intake
       const intakeCourses = {};
       await Promise.all(
         intakes.map(async (intake) => {
           try {
-            const response = await apiClient.get(`/courses/intakes/${intake.id}/courses/`);
-            intakeCourses[intake.id] = Array.isArray(response.data) ? response.data : [];
+            const res = await apiClient.get(`/courses/intakes/${intake.id}/courses/`);
+            intakeCourses[intake.id] = Array.isArray(res.data) ? res.data : [];
           } catch (error) {
             console.warn(`Failed to fetch courses for intake ${intake.id}:`, error);
             intakeCourses[intake.id] = [];
           }
         })
       );
-      console.log('Intake Courses:', intakeCourses);
 
+      // Attach intake info
       filteredCourses = filteredCourses.map((course) => {
         let intake = null;
         for (const intakeId in intakeCourses) {
@@ -80,14 +76,12 @@ export const fetchCourses = createAsyncThunk(
             }
           }
         }
-        return {
-          ...course,
-          intake,
-        };
+        return { ...course, intake };
       });
-      console.log('Filtered Courses (with intake):', filteredCourses);
 
+      console.log('Filtered Courses (with intake):', filteredCourses);
       return filteredCourses;
+
     } catch (error) {
       console.error('fetchCourses error:', error);
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch courses');
