@@ -23,7 +23,7 @@ import MyCourses from "../../Components/MyCourses/MyCourses";
 import Assignments from "./Assignments";
 import Submissions from "./Submissions";
 import Grades from "./Grades";
-import CreateAssignment from "./CreateAssignment";
+import CreateAssignment from "../../Components/CreateAssignments/CreateAssignments";
 import OpeningPage from "./OpeningPage";
 import ChatRoomView from '../../Components/Chat/ChatRoomView';
 import ChatRoomList from '../../Components/Chat/ChatRoomList';
