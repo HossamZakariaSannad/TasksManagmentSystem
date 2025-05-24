@@ -114,6 +114,11 @@ const InstructorDashboard = () => {
 
   const menuItems = [
     {
+      text: "Dashboard",
+      icon: <FiBook size={20} />,
+      path: "/instructor/dashboard/",
+    },
+    {
       text: "My Courses",
       icon: <FiBook size={20} />,
       path: "/instructor/dashboard/courses",
