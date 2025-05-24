@@ -6,7 +6,7 @@ const privacyData = [
   {
     title: "Introduction",
     content:
-      "This policy describes how Task Flow collects, uses, and protects your personal information.",
+      "This policy describes how TaskPilot collects, uses, and protects your personal information.",
   },
   {
     title: "Information We Collect",

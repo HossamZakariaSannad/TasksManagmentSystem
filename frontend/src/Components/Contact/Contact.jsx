@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com'; 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://task-project-backend-1hx7.onrender.com";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -83,7 +85,7 @@ const Contact = () => {
             >
               <i className="bi bi-envelope"></i>
               <h3>Email</h3>
-              <p>support@taskflowpro.com</p>
+              <p>support@TaskPilotpro.com</p>
             </div>
           </div>
         </div>

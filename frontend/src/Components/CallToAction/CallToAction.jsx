@@ -5,7 +5,7 @@ import heroBg from "/src/assets/img/newCapital2.png";
 const callToActionData = {
   title: "Let's Get Things Done",
   description:
-    "Ready to boost your team's productivity and keep every task on track? Join Task Flow today and start managing your projects with clarity and confidence.",
+    "Ready to boost your team's productivity and keep every task on track? Join TaskPilot today and start managing your projects with clarity and confidence.",
   buttonText: "Services",
   imageUrl: heroBg,
 };

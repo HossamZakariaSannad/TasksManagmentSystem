@@ -209,8 +209,7 @@ class ExcelUploadSerializer(serializers.Serializer):
                     message = f"""
                     Hello {student.first_name},
 
-                    Your student account has been created. Please verify your email by visiting:
-                    {verification_url}
+                   
 
                     Your login information:
                     - Email: {student.email}
@@ -218,7 +217,7 @@ class ExcelUploadSerializer(serializers.Serializer):
                     - Intake ID: {student.intake.id}
                     - Track: {student.track.name}
 
-                    Use these credentials to log in as a student. After verification, you can change your password.
+                    Use these credentials to log in as a student. After Login, you can change your password.
                     """
                     send_mail(
                         subject,
@@ -358,16 +357,14 @@ class StudentSerializer(serializers.ModelSerializer):
             message = f"""
             Hello {student.first_name},
 
-            Your student account has been created. Please verify your email by visiting:
-            {verification_url}
-
+            
             Your login information:
             - Email: {student.email}
             - Temporary Password: {password}
             - Intake ID: {student.intake.id}
             - Track: {student.track.name}
 
-            Use these credentials to log in as a student. After verification, you can change your password.
+            Use these credentials to log in as a student. After Login, you can change your password.
             """
             send_mail(
                 subject,

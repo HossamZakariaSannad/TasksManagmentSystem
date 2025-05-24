@@ -7,10 +7,10 @@ const About = () => {
   const isHomePage = location.pathname === "/";
 
   const aboutData = {
-    title: "About Task Flow",
+    title: "About TaskPilot",
     subtitle: "Empowering teams to achieve more",
     description:
-      "Task Flow is a powerful task and project management platform designed to streamline workflows, boost productivity, and simplify collaboration for teams of any size.",
+      "TaskPilot is a powerful task and project management platform designed to streamline workflows, boost productivity, and simplify collaboration for teams of any size.",
     listItems: [
       "Create, assign, and track tasks across multiple projects effortlessly.",
       "Collaborate with team members in real time through integrated chat and comments.",
@@ -24,7 +24,10 @@ const About = () => {
 
   return (
     <section className="about section">
-      <div className="container section-title d-flex flex-column" data-aos="fade-up">
+      <div
+        className="container section-title d-flex flex-column"
+        data-aos="fade-up"
+      >
         <span>{aboutData.title}</span>
         <h2>{aboutData.title}</h2>
         <p>{aboutData.description}</p>
