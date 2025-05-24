@@ -10,87 +10,107 @@ import {
   CircularProgress,
   Alert,
   Avatar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { FiSend } from "react-icons/fi";
 import { FaRobot } from "react-icons/fa";
 import "./ChatWithAI.css";
 
+// Define available models
+const AVAILABLE_MODELS = [
+  { value: "deepseek-ai/DeepSeek-V3", label: "DeepSeek-V3" },
+  { value: "meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8", label: "Llama-4-Maverick-17B" },
+  { value: "deepseek-ai/DeepSeek-R1", label: "DeepSeek-R1" },
+  { value: "Qwen/Qwen2.5-VL-72B-Instruct", label: "Qwen2.5-VL-72B" },
+  { value: "meta-llama/Llama-4-Scout-17B-16E-Instruct", label: "Llama-4-Scout-17B" },
+];
+
 const ChatWithAI = () => {
   const [input, setInput] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [selectedModel, setSelectedModel] = useState(AVAILABLE_MODELS[0].value);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
-  const maxRetries = 3;
   const chatBoxRef = useRef(null);
 
-  console.log("ChatWithAI Component Rendered"); // Debug log
+  console.log("ChatWithAI Component Rendered");
 
-  const sendMessage = async () => {
-    console.log("sendMessage called, input:", input); // Debug log
+  const sendMessage = useCallback(async () => {
+    console.log("sendMessage called, input:", input, "model:", selectedModel, "imageUrl:", imageUrl);
     if (!input.trim()) {
       setError("Please enter a message");
-      console.log("Empty input detected"); // Debug log
-      return;
-    }
-    if (retryCount >= maxRetries) {
-      setError("Maximum retry attempts reached");
-      console.log("Max retries reached"); // Debug log
+      console.log("Empty input detected");
       return;
     }
 
     // Add user message to history
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", content: input, id: Date.now() },
-    ]);
+    const userMessage = {
+      role: "user",
+      content: imageUrl
+        ? `${input}<br /><small>Image URL: ${imageUrl}</small>`
+        : input,
+      id: Date.now(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setImageUrl("");
     setLoading(true);
     setError("");
 
     try {
-      console.log("Sending API request:", input); // Debug log
-      const res = await fetch(
-        "https://task-project-backend-1hx7.onrender.com/api/chatAI/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: input }),
-        }
-      );
+      console.log("Sending API request:", { message: input, model: selectedModel, image_url: imageUrl });
+      const res = await fetch("https://task-project-backend-1hx7.onrender.com/api/chatAI/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: input,
+          model: selectedModel,
+          ...(imageUrl && { image_url: imageUrl }),
+        }),
+      });
 
       if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
 
       const data = await res.json();
-      console.log("AI Response:", data); // Debug log
+      console.log("AI Response:", data);
+
+      if (data.error) {
+        // Handle rate limit error specifically
+        if (data.error.includes("rate limit")) {
+          throw new Error(
+            "Rate limit reached for this model. Please wait a moment and try again."
+          );
+        }
+        throw new Error(data.error);
+      }
 
       // Clean response: remove markdown symbols
       const cleanResponse = data.response
-        .replace(/#{1,6}\s*/g, "") // Remove headers
-        .replace(/\*\*\*/g, "") // Remove bold/italics
-        .replace(/```[\s\S]*?```/g, "") // Remove code blocks
-        .replace(/[-*+]\s/g, "• ") // Convert list markers to bullets
-        .replace(/\n/g, "<br />"); // Convert newlines to HTML breaks
+        .replace(/#{1,6}\s*/g, "")
+        .replace(/\*\*\*/g, "")
+        .replace(/```[\s\S]*?```/g, "")
+        .replace(/[-*+]\s/g, "• ")
+        .replace(/\n/g, "<br />");
 
       setMessages((prev) => [
         ...prev,
-        { role: "ai", content: cleanResponse, id: Date.now() + 1 },
+        {
+          role: "ai",
+          content: `${cleanResponse}<br /><small>Model: ${data.model_used}</small>`,
+          id: Date.now() + 1,
+        },
       ]);
-      setRetryCount(0);
     } catch (err) {
-      console.error("Chat Error:", err); // Debug log
-      setError("Failed to get response: " + err.message);
-      if (retryCount < maxRetries) {
-        setTimeout(() => {
-          setRetryCount((prev) => prev + 1);
-          console.log("Retrying API call, attempt:", retryCount + 1); // Debug log
-          sendMessage();
-        }, 1000 * (retryCount + 1));
-      }
+      console.error("Chat Error:", err);
+      setError(err.message); // Display the error without retrying
     } finally {
       setLoading(false);
     }
-  };
+  }, [input, selectedModel, imageUrl]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -100,8 +120,8 @@ const ChatWithAI = () => {
   }, [messages, loading]);
 
   useEffect(() => {
-    console.log("ChatWithAI Mounted"); // Debug log
-    return () => console.log("ChatWithAI Unmounted"); // Debug log
+    console.log("ChatWithAI Mounted");
+    return () => console.log("ChatWithAI Unmounted");
   }, []);
 
   return (
@@ -204,27 +224,58 @@ const ChatWithAI = () => {
             className="input-area"
             sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}
           >
+            <FormControl sx={{ minWidth: 150 }} disabled={loading}>
+              <InputLabel id="model-select-label">Model</InputLabel>
+              <Select
+                labelId="model-select-label"
+                value={selectedModel}
+                label="Model"
+                onChange={(e) => {
+                  setSelectedModel(e.target.value);
+                  console.log("Model changed:", e.target.value);
+                }}
+              >
+                {AVAILABLE_MODELS.map((model) => (
+                  <MenuItem key={model.value} value={model.value}>
+                    {model.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="Ask anything..."
               variant="outlined"
               value={input}
               onChange={(e) => {
                 setInput(e.target.value);
-                console.log("Input changed:", e.target.value); // Debug log
+                console.log("Input changed:", e.target.value);
               }}
               onKeyDown={(e) => {
-                console.log("Key pressed:", e.key); // Debug log
+                console.log("Key pressed:", e.key);
                 if (e.key === "Enter") sendMessage();
               }}
               sx={{ flex: 1, minWidth: 200 }}
               aria-label="Type your message"
               disabled={loading}
             />
+            <TextField
+              label="Image URL (optional)"
+              variant="outlined"
+              value={imageUrl}
+              onChange={(e) => {
+                setImageUrl(e.target.value);
+                console.log("Image URL changed:", e.target.value);
+              }}
+              sx={{ flex: 1, minWidth: 200 }}
+              aria-label="Image URL"
+              disabled={loading || selectedModel !== "Qwen/Qwen2.5-VL-72B-Instruct"}
+              placeholder="Only for Qwen2.5-VL"
+            />
             <Button
               variant="contained"
               startIcon={<FiSend />}
               onClick={() => {
-                console.log("Send button clicked"); // Debug log
+                console.log("Send button clicked");
                 sendMessage();
               }}
               disabled={loading || !input.trim()}
