@@ -175,7 +175,8 @@ const Grades = () => {
         ...(response.data.submitters || []),
         ...(response.data.non_submitters || []).map(s => ({ ...s, submitted: false }))
       ];
-
+      console.log("sdasd",allStudents);
+      
       const processedStudents = await Promise.all(
         allStudents.map(async (student) => {
           try {
@@ -189,8 +190,8 @@ const Grades = () => {
               const submissionRes = await apiClient.get(
                 `submission/assignments/${assignmentId}/students/${student.student_id}/`
               );
-              if (submissionRes.data?.submission) {
-                submission = submissionRes.data.submission;
+              if (submissionRes?.data[0]) {
+                submission = submissionRes.data;
                 submissionId = submission.id;
                 fileUrl = submission.file_url;
                 submissionDate = submission.submission_time;
@@ -201,11 +202,11 @@ const Grades = () => {
                 const altRes = await apiClient.get(
                   `submission/instructor/?student=${student.student_id}&assignment=${assignmentId}`
                 );
-                if (altRes.data?.results?.[0]) {
-                  submission = altRes.data.results[0];
+                if (altRes?.data[0]) {
+                  submission = altRes?.data[0];
                   submissionId = submission.id;
                   fileUrl = submission.file_url;
-                  submissionDate = submission.submission_time;
+                  submissionDate = submission.submission_date;
                 }
               } catch (altError) {
                 console.log('Alternative submission fetch failed');
@@ -249,7 +250,7 @@ const Grades = () => {
           }
         })
       );
-
+      
       // Separate back into submitters and non-submitters based on actual submission status
       const submitters = processedStudents.filter(s => s.submitted);
       const non_submitters = processedStudents.filter(s => !s.submitted);
@@ -258,7 +259,8 @@ const Grades = () => {
       const evaluations = {};
       const initialFeedback = {};
       const initialGrades = {};
-
+      
+      console.log("submiters",submitters);
       processedStudents.forEach((student) => {
         if (student.existingEvaluation) {
           evaluations[student.student_id] = student.existingEvaluation;
@@ -726,9 +728,9 @@ const Grades = () => {
                                   <ScheduleIcon color="action" />
                                   <Typography variant="body2">
                                     Submitted:{" "}
-                                    {student.submission_date
+                                    {student.existingEvaluation.graded_date
                                       ? format(
-                                        new Date(student.submission_date),
+                                        new Date(student.existingEvaluation.graded_date),
                                         "PPpp"
                                       )
                                       : "N/A"}
@@ -990,10 +992,10 @@ const Grades = () => {
                                               Submission Time
                                             </Typography>
                                             <Typography variant="h6" sx={{ mt: 1 }}>
-                                              {student.existingEvaluation.submission_time
+                                              {student.submission_date
                                                 ? format(
                                                   new Date(
-                                                    student.existingEvaluation.submission_time
+                                                    student.submission_date
                                                   ),
                                                   "PPpp"
                                                 )
