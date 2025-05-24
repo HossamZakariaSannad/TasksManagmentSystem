@@ -565,7 +565,7 @@ const Grades = () => {
     if (existingEvaluations[student.student_id]) return "success.main";
     return "warning.main";
   };
-console.log(filteredStudents);
+// console.log(filteredStudents);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -728,7 +728,7 @@ console.log(filteredStudents);
                                 <Box sx={{ display: "flex", gap: 1 }}>
                                   <ScheduleIcon color="action" />
                                   <Typography variant="body2">
-                                    Submitted:{" "}
+                                    Graded Time:{" "}
                                     {student.existingEvaluation.graded_date
                                       ? format(
                                         new Date(student.existingEvaluation.graded_date),
