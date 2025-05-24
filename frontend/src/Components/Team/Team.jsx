@@ -6,11 +6,11 @@ import "swiper/css/autoplay";
 import { Autoplay } from "swiper/modules";
 
 // Import team images
-import zalabany from "../../assets/img/team/zalabany.jpg"; // 7ot sortk hna ya zalabany
+import zalabany from "../../assets/img/team/zalabany.jpg";
 import mano from "../../assets/img/team/mano.png";
 import hossam from "../../assets/img/team/hossam.jpg";
 import khaled from "../../assets/img/team/khaled.jpg";
-import pola from "../../assets/img/team/pola.jpg";
+import paula from "../../assets/img/team/paula.jpg";
 
 const teamMembers = [
   {
@@ -27,7 +27,7 @@ const teamMembers = [
     },
   },
   {
-    portfolio: "2",
+    portfolio: "https://hossamzakariasannad.github.io/html-project-portfolio/",
     name: "Hossam Zakaria",
     role: "Full Stack Developer",
     description:
@@ -66,12 +66,12 @@ const teamMembers = [
     },
   },
   {
-    portfolio: "5",
+    portfolio: "https://paulamagdy.framer.website/",
     name: "Paula Magdy",
     role: "Full Stack Developer",
     description:
       "Paula leads the development of unit testing and modern UI/UX, ensuring our platform is cutting-edge and user-friendly.",
-    image: pola,
+    image: paula,
     socialLinks: {
       linkedin: "https://www.linkedin.com/in/paula-magdy/",
       github: "https://github.com/PaulaMagdi0",
@@ -141,7 +141,7 @@ const Team = () => {
                     href={member.portfolio}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="details-link mt-1"
+                    className="details-link mt-3"
                   >
                     <i className="bi bi-link-45deg"></i> View Portfolio
                   </a>
