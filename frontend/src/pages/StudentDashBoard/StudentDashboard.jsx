@@ -11,6 +11,8 @@ import EntertainmentSection from "./EntertainmentSection";
 import LibrarySection from "./LibrarySection";
 import BookHubSection from "./BookHubSection";
 import ChatWithAISection from "./ChatWithAISection";
+import ChatRoomView from "../../Components/Chat/ChatRoomView";
+import ChatRoomList from "../../Components/Chat/ChatRoomList";
 import { fetchStudentData } from "./api";
 import "./StudentDashboard.css";
 
@@ -24,6 +26,8 @@ const menuItems = [
   "entertainment",
   "library",
   "chatWithAI",
+  "chat",
+  "chat/rooms/:roomId",
 ];
 
 // Error Boundary for the entire dashboard
@@ -197,6 +201,10 @@ const StudentDashboard = () => {
         return <BookHubSection />;
       case "chatWithAI":
         return <ChatWithAISection />;
+      case "chat":
+        return <ChatRoomList />;
+      case "chat/rooms/:roomId":
+        return <ChatRoomView />;
       default:
         return null;
     }
