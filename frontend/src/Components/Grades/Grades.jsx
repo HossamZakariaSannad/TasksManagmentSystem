@@ -565,6 +565,7 @@ const Grades = () => {
     if (existingEvaluations[student.student_id]) return "success.main";
     return "warning.main";
   };
+console.log(filteredStudents);
 
   return (
     <Box sx={{ p: 3 }}>
