@@ -20,8 +20,8 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import MyCourses from "../../Components/MyCourses/MyCourses";
-import Assignments from "./Assignments";
-import Submissions from "./Submissions";
+import Assignments from "../../Components/Assignments/Assignments";
+import Submissions from "../../Components/Submissions/Submissions";
 import Grades from "./Grades";
 import CreateAssignment from "../../Components/CreateAssignments/CreateAssignments";
 import OpeningPage from "./OpeningPage";
