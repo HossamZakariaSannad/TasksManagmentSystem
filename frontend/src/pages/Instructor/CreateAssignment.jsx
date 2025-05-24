@@ -1,7 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCourses } from "../../redux/coursesSlice";
-import { fetchTracks, fetchStudents, createAssignment } from "../../redux/createassignmentsSlice";
+import {
+  fetchTracks,
+  fetchCourses,
+  fetchStudents,
+  createAssignment,
+} from "../../redux/createassignmentsSlice";
 import {
   Box,
   Paper,
@@ -170,12 +174,13 @@ const CreateAssignment = () => {
   const { user_id, role } = useSelector((state) => state.auth);
   const {
     tracks,
+    courses: assignmentCourses,
     students,
     loading,
     error,
   } = useSelector((state) => state.createassignments);
   const {
-    data: { tracks: courseTracks, courses: assignmentCourses },
+    userCourses: { track_courses, courses: myCourses },
     status: { fetchCoursesLoading, fetchCoursesError },
   } = useSelector((state) => state.courses);
 
@@ -220,38 +225,41 @@ const CreateAssignment = () => {
   });
   const [isTrackMenuOpen, setIsTrackMenuOpen] = useState(false);
 
-  // Compute unique courses
+  // Compute unique courses similar to MyCourses
   const uniqueCourses = useMemo(() => {
     const courseMap = new Map();
-    const sourceCourses = assignmentCourses;
+    const sourceCourses = assignmentCourses; // Use state.createassignments.courses
 
     sourceCourses.forEach((course) => {
       if (!courseMap.has(course.id)) {
-        const courseTrackObjects = Array.isArray(course.tracks)
-          ? course.tracks.map((trackId) => {
-            const track = courseTracks.find((t) => t.id === trackId);
-            return track ? { id: track.id, name: track.name } : null;
-          }).filter(Boolean)
-          : [];
         courseMap.set(course.id, {
           ...course,
-          tracks: courseTrackObjects,
+          tracks: Array.isArray(course.tracks) ? course.tracks : [],
+        });
+      } else {
+        const existing = courseMap.get(course.id);
+        const existingTrackIds = new Set(existing.tracks.map((t) => t.id));
+        course.tracks?.forEach((track) => {
+          if (!existingTrackIds.has(track.id)) {
+            existing.tracks.push(track);
+            existingTrackIds.add(track.id);
+          }
         });
       }
     });
 
     if (formData.track) {
       return Array.from(courseMap.values()).filter((course) =>
-        course.tracks.some((track) => track.id === formData.track)
+        course.tracks?.some((track) => track.id === formData.track)
       );
     }
     return Array.from(courseMap.values());
-  }, [assignmentCourses, courseTracks, formData.track]);
+  }, [assignmentCourses, formData.track]);
 
   // Fetch tracks and courses
   useEffect(() => {
     dispatch(fetchTracks(user_id));
-    dispatch(fetchCourses(user_id));
+    dispatch(fetchMyCourses(user_id)); // Use coursesSlice to fetch courses
   }, [dispatch, user_id]);
 
   // Validate track and reset if invalid
@@ -268,6 +276,12 @@ const CreateAssignment = () => {
       }
     }
   }, [tracks, formData.track]);
+
+  const fetchCoursesMemoized = useCallback(() => {
+    if (formData.track) {
+      dispatch(fetchCourses({ userId: user_id, trackId: formData.track }));
+    }
+  }, [dispatch, user_id, formData.track]);
 
   const fetchStudentsMemoized = useCallback(() => {
     if (formData.course && formData.track) {
@@ -287,7 +301,15 @@ const CreateAssignment = () => {
         dispatch({ type: 'assignments/clearStudents' });
       }
     }
-  }, [dispatch, formData.track, formData.course, uniqueCourses]);
+  }, [dispatch, formData.track, formData.course, courses]);
+
+  useEffect(() => {
+    dispatch(fetchTracks(user_id));
+  }, [dispatch, user_id]);
+
+  useEffect(() => {
+    fetchCoursesMemoized();
+  }, [fetchCoursesMemoized]);
 
   useEffect(() => {
     fetchStudentsMemoized();
@@ -309,7 +331,7 @@ const CreateAssignment = () => {
 
       try {
         const response = await fetch(
-          `${API_URL}/api/chatAI/`,
+          "https://task-project-backend-1hx7.onrender.com/api/chatAI/",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -354,7 +376,7 @@ const CreateAssignment = () => {
       return;
     }
 
-    let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
+    let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
       const course = uniqueCourses.find((c) => c.id === formData.course);
       const courseName = course
@@ -804,12 +826,12 @@ const CreateAssignment = () => {
                   name="course"
                   label="Course"
                 >
-                  {fetchCoursesLoading ? (
+                  {loading ? (
                     <MenuItem disabled>Loading courses...</MenuItem>
                   ) : !formData.track ? (
                     <MenuItem disabled>Select a track first</MenuItem>
-                  ) : uniqueCourses.length > 0 ? (
-                    uniqueCourses.map((course) => (
+                  ) : courses.length > 0 ? (
+                    courses.map((course) => (
                       <MenuItem key={course.id} value={course.id}>
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <Avatar
@@ -1170,8 +1192,10 @@ const CreateAssignment = () => {
                         {uniqueCourses.find((c) => c.id === formData.course)
                           ? `${uniqueCourses.find(
                             (c) => c.id === formData.course
-                          ).name} Intake(${uniqueCourses.find((c) => c.id === formData.course)
-                            .intake?.name || "No Intake"
+                          ).name
+                          } Intake(${uniqueCourses.find(
+                            (c) => c.id === formData.course
+                          ).intake?.name || "No Intake"
                           })`
                           : "Not selected"}
                         <br />
@@ -1260,19 +1284,6 @@ const CreateAssignment = () => {
             {error}
           </Alert>
         )}
-        {fetchCoursesError && (
-          <Alert
-            severity="error"
-            sx={{
-              mb: 2,
-              borderRadius: "8px",
-              fontSize: "0.875rem",
-              bgcolor: theme.palette.error.light,
-            }}
-          >
-            {fetchCoursesError}
-          </Alert>
-        )}
         {!(loading || fetchCoursesLoading) &&
           uniqueCourses.length === 0 &&
           formData.track && (
@@ -1285,10 +1296,8 @@ const CreateAssignment = () => {
                 bgcolor: theme.palette.warning.light,
               }}
             >
-              No courses found for the selected track (
-              {tracks.find((t) => t.id === formData.track)?.name || "Unknown"}).
-              Please select a different track or contact an admin to get assigned
-              to a course.
+              No courses assigned for the selected track. Please contact an
+              admin to get assigned to a course.
             </Alert>
           )}
 
