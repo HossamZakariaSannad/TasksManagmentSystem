@@ -59,6 +59,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { isValidUrl } from "../../../utils/validation";
 
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://task-project-backend-1hx7.onrender.com";
 const steps = ["Basic Info", "Assignment Target", "Review"];
 
 const SimpleButton = styled(Button)(({ theme }) => ({
@@ -168,18 +171,18 @@ const CreateAssignment = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
-  const { user_id } = useSelector((state) => state.auth);
-  const { tracks, courses, students, loading, error } = useSelector(
-    (state) => state.createassignments
-  );
-
-  useEffect(() => {
-    console.log("Tracks:", tracks);
-    console.log("Courses:", courses);
-    console.log("Students:", students);
-    console.log("Loading:", loading);
-    console.log("Error:", error);
-  }, [tracks, courses, students, loading, error]);
+  const { user_id, role } = useSelector((state) => state.auth);
+  const {
+    tracks,
+    courses: assignmentCourses,
+    students,
+    loading,
+    error,
+  } = useSelector((state) => state.createassignments);
+  const {
+    userCourses: { track_courses, courses: myCourses },
+    status: { fetchCoursesLoading, fetchCoursesError },
+  } = useSelector((state) => state.courses);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -222,6 +225,44 @@ const CreateAssignment = () => {
   });
   const [isTrackMenuOpen, setIsTrackMenuOpen] = useState(false);
 
+  // Compute unique courses similar to MyCourses
+  const uniqueCourses = useMemo(() => {
+    const courseMap = new Map();
+    const sourceCourses = assignmentCourses; // Use state.createassignments.courses
+
+    sourceCourses.forEach((course) => {
+      if (!courseMap.has(course.id)) {
+        courseMap.set(course.id, {
+          ...course,
+          tracks: Array.isArray(course.tracks) ? course.tracks : [],
+        });
+      } else {
+        const existing = courseMap.get(course.id);
+        const existingTrackIds = new Set(existing.tracks.map((t) => t.id));
+        course.tracks?.forEach((track) => {
+          if (!existingTrackIds.has(track.id)) {
+            existing.tracks.push(track);
+            existingTrackIds.add(track.id);
+          }
+        });
+      }
+    });
+
+    if (formData.track) {
+      return Array.from(courseMap.values()).filter((course) =>
+        course.tracks?.some((track) => track.id === formData.track)
+      );
+    }
+    return Array.from(courseMap.values());
+  }, [assignmentCourses, formData.track]);
+
+  // Fetch tracks and courses
+  useEffect(() => {
+    dispatch(fetchTracks(user_id));
+    dispatch(fetchMyCourses(user_id)); // Use coursesSlice to fetch courses
+  }, [dispatch, user_id]);
+
+  // Validate track and reset if invalid
   useEffect(() => {
     if (formData.track && tracks.length > 0) {
       const isValidTrack = tracks.some((track) => track.id === formData.track);
@@ -244,7 +285,9 @@ const CreateAssignment = () => {
 
   const fetchStudentsMemoized = useCallback(() => {
     if (formData.course && formData.track) {
-      const selectedCourse = courses.find((c) => c.id === formData.course);
+      const selectedCourse = uniqueCourses.find(
+        (c) => c.id === formData.course
+      );
       const intakeId = selectedCourse?.intake?.id;
       if (intakeId) {
         dispatch(
@@ -255,7 +298,7 @@ const CreateAssignment = () => {
           })
         );
       } else {
-        dispatch({ type: "assignments/clearStudents" });
+        dispatch({ type: 'assignments/clearStudents' });
       }
     }
   }, [dispatch, formData.track, formData.course, courses]);
@@ -335,15 +378,13 @@ const CreateAssignment = () => {
 
     let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
-      const course = courses.find((c) => c.id === formData.course);
-      const courseName = course ? course.name : "";
-      const intakeName = course && course.intake ? course.intake.name : "";
+      const course = uniqueCourses.find((c) => c.id === formData.course);
+      const courseName = course
+        ? `${course.name} Intake(${course.intake?.name || "No Intake"})`
+        : "";
       url += `&course_name=${encodeURIComponent(
         courseName
       )}&difficulty=${encodeURIComponent(formData.difficulty)}`;
-      if (intakeName) {
-        url += `&intake_name=${encodeURIComponent(intakeName)}`;
-      }
     } else {
       url += `&brief_description=${encodeURIComponent(
         recommendationDialog.briefDescription
@@ -719,7 +760,7 @@ const CreateAssignment = () => {
                     disablePortal: true,
                     sx: {
                       '&[aria-hidden="true"]': {
-                        display: isTrackMenuOpen ? "block" : "none",
+                        display: isTrackMenuOpen ? 'block' : 'none',
                       },
                     },
                   }}
@@ -770,7 +811,12 @@ const CreateAssignment = () => {
               <FormControl
                 fullWidth
                 required
-                disabled={!formData.track || loading || courses.length === 0}
+                disabled={
+                  !formData.track ||
+                  loading ||
+                  fetchCoursesLoading ||
+                  uniqueCourses.length === 0
+                }
                 error={validationErrors.course}
               >
                 <InputLabel sx={{ fontWeight: 500 }}>Course</InputLabel>
@@ -1143,10 +1189,13 @@ const CreateAssignment = () => {
                         Course & Track
                       </Typography>
                       <Typography variant="body2">
-                        {courses.find((c) => c.id === formData.course)
-                          ? `${courses.find((c) => c.id === formData.course).name
-                          } Intake(${courses.find((c) => c.id === formData.course)
-                            .intake?.name || "No Intake"
+                        {uniqueCourses.find((c) => c.id === formData.course)
+                          ? `${uniqueCourses.find(
+                            (c) => c.id === formData.course
+                          ).name
+                          } Intake(${uniqueCourses.find(
+                            (c) => c.id === formData.course
+                          ).intake?.name || "No Intake"
                           })`
                           : "Not selected"}
                         <br />
@@ -1235,20 +1284,22 @@ const CreateAssignment = () => {
             {error}
           </Alert>
         )}
-        {!loading && courses.length === 0 && formData.track && (
-          <Alert
-            severity="warning"
-            sx={{
-              mb: 2,
-              borderRadius: "8px",
-              fontSize: "0.875rem",
-              bgcolor: theme.palette.warning.light,
-            }}
-          >
-            No courses assigned for the selected track. Please contact an admin
-            to get assigned to a course.
-          </Alert>
-        )}
+        {!(loading || fetchCoursesLoading) &&
+          uniqueCourses.length === 0 &&
+          formData.track && (
+            <Alert
+              severity="warning"
+              sx={{
+                mb: 2,
+                borderRadius: "8px",
+                fontSize: "0.875rem",
+                bgcolor: theme.palette.warning.light,
+              }}
+            >
+              No courses assigned for the selected track. Please contact an
+              admin to get assigned to a course.
+            </Alert>
+          )}
 
         <Stepper
           activeStep={activeStep}
