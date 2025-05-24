@@ -14,7 +14,7 @@
   .setup, .delivery, .joke {
     font-size: 1.1rem;
     line-height: 1.5;
-    color: #333;
+    color: #1e1e1e;
   }
   
   .setup strong, .delivery strong, .joke strong {

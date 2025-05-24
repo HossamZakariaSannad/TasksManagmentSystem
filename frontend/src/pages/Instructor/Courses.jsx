@@ -146,7 +146,7 @@ const Courses = () => {
   const trackNames = [...new Set(tracks.map((track) => track.name))];
   const courseNames = [...new Set(courses.map((course) => course.name))];
   // console.log(tracks);
-  
+
   const createdDates = [
     ...new Set(
       courses.map(
@@ -163,7 +163,7 @@ const Courses = () => {
       (trackId) => tracks.find((t) => t.id === trackId)?.name || ""
     );
     const courseDate = new Date(course.created_at).toISOString().split("T")[0];
-  
+
     return (
       (course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         course.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -172,7 +172,7 @@ const Courses = () => {
       (!createdAtFilter || courseDate === createdAtFilter)
     );
   });
-  
+
   console.log(filteredCourses);
 
   const rows = filteredCourses.map((course) => ({
@@ -184,12 +184,11 @@ const Courses = () => {
           // Find the track by ID
           const track = tracks.find((t) => t.id === trackId.id);
           // If track is found, return its name, otherwise return "Unknown Track"
-          return track ? track.name : "Unknown Track"; 
+          return track ? track.name : "Unknown Track";
         })
-      : [],  // Default to an empty array if no tracks exist
+      : [], // Default to an empty array if no tracks exist
     created_at: formatDate(course.created_at),
   }));
-  
 
   return (
     <Box sx={{ padding: 3 }}>
@@ -382,6 +381,7 @@ const Courses = () => {
               },
             ".MuiTablePagination-toolbar": {
               justifyContent: "center",
+              margin: "auto",
             },
           }}
         />

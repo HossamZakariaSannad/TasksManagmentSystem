@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCourses, reassignInstructor, removeCourseFromTrack, fetchIntakes, fetchIntakeCourses } from "../../redux/coursesSlice";
+import {
+  fetchCourses,
+  reassignInstructor,
+  removeCourseFromTrack,
+  fetchIntakes,
+  fetchIntakeCourses,
+} from "../../redux/coursesSlice";
 import { fetchInstructors } from "../../redux/supervisorsSlice";
 import {
   Button,
@@ -84,9 +90,9 @@ const ReAssignCourses = () => {
     userCourses: { tracks, track_courses: courses },
     intakes,
     intakeCourses,
-    status: { 
-      fetchCoursesLoading, 
-      fetchCoursesError, 
+    status: {
+      fetchCoursesLoading,
+      fetchCoursesError,
       reassignInstructorLoading,
       removeCourseFromTrackLoading,
       removeCourseFromTrackError,
@@ -94,7 +100,7 @@ const ReAssignCourses = () => {
       fetchIntakesError,
       fetchIntakeCoursesLoading,
       fetchIntakeCoursesError,
-      success
+      success,
     },
   } = useSelector((state) => state.courses);
   const {
@@ -107,7 +113,11 @@ const ReAssignCourses = () => {
   const [editingCourse, setEditingCourse] = useState(null);
   const [selectedInstructorId, setSelectedInstructorId] = useState("");
   const [selectedTrackId, setSelectedTrackId] = useState(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
   const [selectedTrack, setSelectedTrack] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedInstructor, setSelectedInstructor] = useState("");
@@ -123,16 +133,31 @@ const ReAssignCourses = () => {
 
   // Debug course and intake data
   useEffect(() => {
-    console.log('Courses data:', courses);
-    console.log('Intakes data:', intakes);
-    console.log('IntakeCourses data:', intakeCourses);
-    console.log('Instructors data:', instructors);
+    console.log("Courses data:", courses);
+    console.log("Intakes data:", intakes);
+    console.log("IntakeCourses data:", intakeCourses);
+    console.log("Instructors data:", instructors);
     courses?.forEach((course) => {
-      console.log(`Course ${course.name} (ID: ${course.id}) - Intake:`, course.intake, 'Tracks:', course.tracks, 'Instructor:', course.instructor);
+      console.log(
+        `Course ${course.name} (ID: ${course.id}) - Intake:`,
+        course.intake,
+        "Tracks:",
+        course.tracks,
+        "Instructor:",
+        course.instructor
+      );
     });
     // Check if any course has intake data or is mapped
-    const hasIntakeData = courses?.some((course) => course.intake || Object.values(intakeCourses).some((ic) => ic.some((c) => c.id === course.id)));
-    setIntakeWarning(!hasIntakeData && courses?.length > 0 && intakes?.length > 0);
+    const hasIntakeData = courses?.some(
+      (course) =>
+        course.intake ||
+        Object.values(intakeCourses).some((ic) =>
+          ic.some((c) => c.id === course.id)
+        )
+    );
+    setIntakeWarning(
+      !hasIntakeData && courses?.length > 0 && intakes?.length > 0
+    );
   }, [courses, intakes, intakeCourses, instructors]);
 
   // Fetch data
@@ -159,11 +184,16 @@ const ReAssignCourses = () => {
       setSelectedInstructorId(editingCourse.instructor?.id || "");
       // Set instructor warning based on track instructors
       const trackInstructors = getTrackInstructors(selectedTrackId);
-      console.log('Track instructors for trackId', selectedTrackId, ':', trackInstructors);
+      console.log(
+        "Track instructors for trackId",
+        selectedTrackId,
+        ":",
+        trackInstructors
+      );
       setInstructorWarning(
         trackInstructors.length === 0
-          ? 'No instructors assigned to courses in this track.'
-          : ''
+          ? "No instructors assigned to courses in this track."
+          : ""
       );
     }
   }, [editingCourse, selectedTrackId]);
@@ -178,23 +208,40 @@ const ReAssignCourses = () => {
       });
       dispatch(fetchCourses(user_id)); // Refetch to update table
     }
-    if (removeCourseFromTrackError || fetchIntakesError || fetchIntakeCoursesError) {
+    if (
+      removeCourseFromTrackError ||
+      fetchIntakesError ||
+      fetchIntakeCoursesError
+    ) {
       setSnackbar({
         open: true,
-        message: removeCourseFromTrackError || fetchIntakesError || fetchIntakeCoursesError,
+        message:
+          removeCourseFromTrackError ||
+          fetchIntakesError ||
+          fetchIntakeCoursesError,
         severity: "error",
       });
     }
-  }, [success, removeCourseFromTrackError, fetchIntakesError, fetchIntakeCoursesError, dispatch, user_id]);
+  }, [
+    success,
+    removeCourseFromTrackError,
+    fetchIntakesError,
+    fetchIntakeCoursesError,
+    dispatch,
+    user_id,
+  ]);
 
   // Filter instructors by track
   const getTrackInstructors = (trackId) => {
     if (!trackId || !courses.length || !instructors.length) {
-      console.log('No trackId, courses, or instructors, returning empty array', {
-        trackId,
-        coursesLength: courses.length,
-        instructorsLength: instructors.length,
-      });
+      console.log(
+        "No trackId, courses, or instructors, returning empty array",
+        {
+          trackId,
+          coursesLength: courses.length,
+          instructorsLength: instructors.length,
+        }
+      );
       return [];
     }
 
@@ -210,7 +257,10 @@ const ReAssignCourses = () => {
         trackCourses
           .filter((course) => course.instructor?.id)
           .map((course) => {
-            console.log(`Course ${course.name} (ID: ${course.id}) has instructor:`, course.instructor);
+            console.log(
+              `Course ${course.name} (ID: ${course.id}) has instructor:`,
+              course.instructor
+            );
             return course.instructor.id;
           })
       ),
@@ -246,11 +296,11 @@ const ReAssignCourses = () => {
     const key = `${courseId}-${trackId}`;
     setDeletingRows((prev) => new Set([...prev, key]));
     try {
-      console.log('Dispatching removeCourseFromTrack:', { courseId, trackId });
+      console.log("Dispatching removeCourseFromTrack:", { courseId, trackId });
       await dispatch(removeCourseFromTrack({ courseId, trackId })).unwrap();
       setDeleteDialogOpen(false);
     } catch (error) {
-      console.error('Remove course from track failed:', error);
+      console.error("Remove course from track failed:", error);
     } finally {
       setDeletingRows((prev) => {
         const newSet = new Set(prev);
@@ -286,7 +336,7 @@ const ReAssignCourses = () => {
     }
 
     try {
-      console.log('Dispatching reassignInstructor:', {
+      console.log("Dispatching reassignInstructor:", {
         courseId: editingCourse.id,
         instructorId: selectedInstructorId,
         trackId: selectedTrackId,
@@ -301,7 +351,7 @@ const ReAssignCourses = () => {
       setEditingCourse(null);
       setSelectedTrackId(null);
     } catch (error) {
-      console.error('Reassign instructor failed:', error);
+      console.error("Reassign instructor failed:", error);
       setSnackbar({
         open: true,
         message: error,
@@ -318,7 +368,7 @@ const ReAssignCourses = () => {
 
   const handleSnackbarClose = () => {
     setSnackbar({ ...snackbar, open: false });
-    dispatch({ type: 'courses/clearCourseStatus' });
+    dispatch({ type: "courses/clearCourseStatus" });
   };
 
   const handleSort = (columnId) => {
@@ -374,7 +424,11 @@ const ReAssignCourses = () => {
   );
   const instructorNames = useMemo(
     () =>
-      [...new Set(instructors?.map((instructor) => instructor.full_name) || [])].sort(),
+      [
+        ...new Set(
+          instructors?.map((instructor) => instructor.full_name) || []
+        ),
+      ].sort(),
     [instructors]
   );
   const intakeNames = useMemo(
@@ -388,15 +442,22 @@ const ReAssignCourses = () => {
       const filteredCourses = courses
         ?.filter((course) => course?.tracks?.some((t) => t.id === track.id))
         ?.filter((course) => {
-          const matchesTrack = selectedTrack ? track.name === selectedTrack : true;
-          const matchesCourse = selectedCourse ? course.name === selectedCourse : true;
+          const matchesTrack = selectedTrack
+            ? track.name === selectedTrack
+            : true;
+          const matchesCourse = selectedCourse
+            ? course.name === selectedCourse
+            : true;
           const matchesInstructor = selectedInstructor
             ? course.instructor?.name === selectedInstructor
             : true;
           const matchesIntake = selectedIntake
-            ? (course.intake?.name || getIntakeName(course.id)) === selectedIntake
+            ? (course.intake?.name || getIntakeName(course.id)) ===
+              selectedIntake
             : true;
-          return matchesTrack && matchesCourse && matchesInstructor && matchesIntake;
+          return (
+            matchesTrack && matchesCourse && matchesInstructor && matchesIntake
+          );
         })
         ?.map((course) => ({
           trackName: track.name,
@@ -418,7 +479,16 @@ const ReAssignCourses = () => {
     const result = Array.from(uniqueRows.values());
     console.log("Filtered rows:", result);
     return result;
-  }, [tracks, courses, intakes, intakeCourses, selectedTrack, selectedCourse, selectedInstructor, selectedIntake]);
+  }, [
+    tracks,
+    courses,
+    intakes,
+    intakeCourses,
+    selectedTrack,
+    selectedCourse,
+    selectedInstructor,
+    selectedIntake,
+  ]);
 
   const sortedRows = useMemo(
     () => sortRows(filteredRows, sortBy, sortOrder),
@@ -426,33 +496,73 @@ const ReAssignCourses = () => {
   );
 
   // Combined loading state
-  const isLoading = fetchCoursesLoading || instructorsLoading || fetchIntakesLoading || fetchIntakeCoursesLoading;
+  const isLoading =
+    fetchCoursesLoading ||
+    instructorsLoading ||
+    fetchIntakesLoading ||
+    fetchIntakeCoursesLoading;
 
   // Combined error state
-  const hasError = fetchCoursesError || instructorsError || fetchIntakesError || fetchIntakeCoursesError;
+  const hasError =
+    fetchCoursesError ||
+    instructorsError ||
+    fetchIntakesError ||
+    fetchIntakeCoursesError;
 
   // Loading state
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "200px", bgcolor: "#f4f6f8" }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "200px",
+        }}
+      >
         <Box sx={{ width: "100%", maxWidth: "1200px" }}>
-          <Skeleton variant="rectangular" height={60} sx={{ mb: 2, borderRadius: 2 }} />
+          <Skeleton
+            variant="rectangular"
+            height={60}
+            sx={{ mb: 2, borderRadius: 2 }}
+          />
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={3}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={3}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
           </Grid>
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} variant="rectangular" height={40} sx={{ mb: 1, borderRadius: 2 }} />
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              height={40}
+              sx={{ mb: 1, borderRadius: 2 }}
+            />
           ))}
         </Box>
       </Box>
@@ -462,9 +572,20 @@ const ReAssignCourses = () => {
   // Error state
   if (hasError) {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "200px", bgcolor: "#f4f6f8" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "200px",
+        }}
+      >
         <Alert severity="error" sx={{ mb: 2, maxWidth: "600px" }}>
-          {fetchCoursesError || instructorsError || fetchIntakesError || fetchIntakeCoursesError}
+          {fetchCoursesError ||
+            instructorsError ||
+            fetchIntakesError ||
+            fetchIntakeCoursesError}
         </Alert>
         <Button
           variant="contained"
@@ -472,9 +593,16 @@ const ReAssignCourses = () => {
             if (fetchCoursesError) dispatch(fetchCourses(user_id));
             if (instructorsError) dispatch(fetchInstructors());
             if (fetchIntakesError) dispatch(fetchIntakes());
-            if (fetchIntakeCoursesError) intakes.forEach((intake) => dispatch(fetchIntakeCourses(intake.id)));
+            if (fetchIntakeCoursesError)
+              intakes.forEach((intake) =>
+                dispatch(fetchIntakeCourses(intake.id))
+              );
           }}
-          sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, borderRadius: 2 }}
+          sx={{
+            bgcolor: "#3b82f6",
+            "&:hover": { bgcolor: "#2563eb" },
+            borderRadius: 2,
+          }}
         >
           Retry
         </Button>
@@ -485,7 +613,15 @@ const ReAssignCourses = () => {
   // Empty data state
   if (!tracks?.length && !courses?.length && !intakes?.length) {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: "200px", bgcolor: "#f4f6f8" }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "200px",
+        }}
+      >
         <Typography variant="h6" sx={{ mb: 2, color: "#64748b" }}>
           No tracks, courses, or intakes available
         </Typography>
@@ -495,7 +631,11 @@ const ReAssignCourses = () => {
             dispatch(fetchCourses(user_id));
             dispatch(fetchIntakes());
           }}
-          sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" }, borderRadius: 2 }}
+          sx={{
+            bgcolor: "#3b82f6",
+            "&:hover": { bgcolor: "#2563eb" },
+            borderRadius: 2,
+          }}
         >
           Retry
         </Button>
@@ -504,30 +644,41 @@ const ReAssignCourses = () => {
   }
 
   return (
-    <Box sx={{ p: 3, bgcolor: "#f4f6f8", minHeight: "100vh" }}>
+    <Box sx={{ p: 3, minHeight: "100vh" }}>
       <Typography
         variant="h4"
-        sx={{ fontWeight: 700, color: "#1e3a8a", mb: 2, textAlign: "center" }}
+        sx={{ fontWeight: 700, color: "#1e1e1e", mb: 2, textAlign: "center" }}
       >
         My Tracks and Courses
       </Typography>
 
       {/* Intake Warning */}
       {intakeWarning && (
-        <Alert severity="warning" sx={{ mb: 2, maxWidth: "1200px", mx: "auto" }}>
-          No intake data found for courses. Ensure courses are assigned to intakes in the backend.
+        <Alert
+          severity="warning"
+          sx={{ mb: 2, maxWidth: "1200px", mx: "auto" }}
+        >
+          No intake data found for courses. Ensure courses are assigned to
+          intakes in the backend.
         </Alert>
       )}
 
       {/* Instructor Warning */}
       {instructorWarning && editingCourse && (
-        <Alert severity="warning" sx={{ mb: 2, maxWidth: "1200px", mx: "auto" }}>
+        <Alert
+          severity="warning"
+          sx={{ mb: 2, maxWidth: "1200px", mx: "auto" }}
+        >
           {instructorWarning}
         </Alert>
       )}
 
       {/* Filters */}
-      <Grid container spacing={3} sx={{ mb: 3, maxWidth: "1200px", mx: "auto" }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 3, maxWidth: "1200px", mx: "auto" }}
+      >
         <Grid item xs={12} md={3}>
           <FormControl variant="outlined" fullWidth>
             <InputLabel>Track</InputLabel>
@@ -535,11 +686,15 @@ const ReAssignCourses = () => {
               value={selectedTrack}
               onChange={handleTrackFilterChange}
               label="Track"
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 2, padding: 0 }}
             >
-              <MenuItem value=""><em>All Tracks</em></MenuItem>
+              <MenuItem value="">
+                <em>All Tracks</em>
+              </MenuItem>
               {trackNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -553,9 +708,13 @@ const ReAssignCourses = () => {
               label="Course"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Courses</em></MenuItem>
+              <MenuItem value="">
+                <em>All Courses</em>
+              </MenuItem>
               {courseNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -569,9 +728,13 @@ const ReAssignCourses = () => {
               label="Instructor"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Instructors</em></MenuItem>
+              <MenuItem value="">
+                <em>All Instructors</em>
+              </MenuItem>
               {instructorNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -585,9 +748,13 @@ const ReAssignCourses = () => {
               label="Intake"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Intakes</em></MenuItem>
+              <MenuItem value="">
+                <em>All Intakes</em>
+              </MenuItem>
               {intakeNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -620,13 +787,25 @@ const ReAssignCourses = () => {
                   { id: "courseName", label: "Course Name", minWidth: 150 },
                   { id: "instructor", label: "Instructor", minWidth: 150 },
                   { id: "intake", label: "Intake", minWidth: 150 },
-                  { id: "actions", label: "Actions", minWidth: 180, align: "right" },
+                  {
+                    id: "actions",
+                    label: "Actions",
+                    minWidth: 180,
+                    align: "right",
+                  },
                 ].map((column) => (
                   <StyledTableCell
                     key={column.id}
                     align={column.align || "left"}
-                    sx={{ minWidth: column.minWidth, cursor: column.id !== "actions" ? "pointer" : "default" }}
-                    onClick={column.id !== "actions" ? () => handleSort(column.id) : undefined}
+                    sx={{
+                      minWidth: column.minWidth,
+                      cursor: column.id !== "actions" ? "pointer" : "default",
+                    }}
+                    onClick={
+                      column.id !== "actions"
+                        ? () => handleSort(column.id)
+                        : undefined
+                    }
                   >
                     {column.label}
                     {sortBy === column.id && column.id !== "actions" && (
@@ -649,15 +828,15 @@ const ReAssignCourses = () => {
                 </TableRow>
               ) : (
                 sortedRows.map((row, index) => (
-                  <StyledTableRow key={`${row.courseId}-${row.trackId}-${index}`}>
+                  <StyledTableRow
+                    key={`${row.courseId}-${row.trackId}-${index}`}
+                  >
                     <TableCell sx={{ p: 2 }}>{row.trackName}</TableCell>
                     <TableCell sx={{ p: 2 }}>{row.courseName}</TableCell>
                     <TableCell sx={{ p: 2 }}>
                       {row.instructor?.name || "Not assigned"}
                     </TableCell>
-                    <TableCell sx={{ p: 2 }}>
-                      {row.intakeName}
-                    </TableCell>
+                    <TableCell sx={{ p: 2 }}>{row.intakeName}</TableCell>
                     <TableCell align="right" sx={{ p: 2 }}>
                       <Button
                         variant="outlined"
@@ -667,11 +846,16 @@ const ReAssignCourses = () => {
                             row.trackName
                           )
                         }
-                        disabled={instructorsLoading || reassignInstructorLoading}
+                        disabled={
+                          instructorsLoading || reassignInstructorLoading
+                        }
                         sx={{
                           borderColor: "#3b82f6",
                           color: "#3b82f6",
-                          "&:hover": { borderColor: "#2563eb", color: "#2563eb" },
+                          "&:hover": {
+                            borderColor: "#2563eb",
+                            color: "#2563eb",
+                          },
                           borderRadius: 2,
                           mr: 1,
                         }}
@@ -681,7 +865,14 @@ const ReAssignCourses = () => {
                       <Button
                         variant="outlined"
                         color="error"
-                        onClick={() => handleDeleteClick(row.courseId, row.trackId, row.courseName, row.trackName)}
+                        onClick={() =>
+                          handleDeleteClick(
+                            row.courseId,
+                            row.trackId,
+                            row.courseName,
+                            row.trackName
+                          )
+                        }
                         disabled={
                           instructorsLoading ||
                           reassignInstructorLoading ||
@@ -690,7 +881,10 @@ const ReAssignCourses = () => {
                         sx={{
                           borderColor: "#ef4444",
                           color: "#ef4444",
-                          "&:hover": { borderColor: "#dc2626", color: "#dc2626" },
+                          "&:hover": {
+                            borderColor: "#dc2626",
+                            color: "#dc2626",
+                          },
                           borderRadius: 2,
                         }}
                       >
@@ -747,14 +941,19 @@ const ReAssignCourses = () => {
               onChange={(e) => setSelectedInstructorId(e.target.value)}
               label="Instructor"
               sx={{ borderRadius: 2 }}
-              disabled={reassignInstructorLoading || !getTrackInstructors(selectedTrackId).length}
+              disabled={
+                reassignInstructorLoading ||
+                !getTrackInstructors(selectedTrackId).length
+              }
             >
               <MenuItem value="">
                 <em>Not assigned</em>
               </MenuItem>
               {getTrackInstructors(selectedTrackId).map((instructor) => (
                 <MenuItem key={instructor.id} value={instructor.id}>
-                  {instructor.full_name || instructor.username || `Instructor ${instructor.id}`}
+                  {instructor.full_name ||
+                    instructor.username ||
+                    `Instructor ${instructor.id}`}
                 </MenuItem>
               ))}
             </Select>
@@ -764,7 +963,12 @@ const ReAssignCourses = () => {
             <Button
               variant="outlined"
               onClick={handleModalClose}
-              sx={{ mr: 2, borderColor: "#64748b", color: "#64748b", borderRadius: 2 }}
+              sx={{
+                mr: 2,
+                borderColor: "#64748b",
+                color: "#64748b",
+                borderRadius: 2,
+              }}
               disabled={reassignInstructorLoading}
             >
               Cancel
@@ -773,7 +977,11 @@ const ReAssignCourses = () => {
               variant="contained"
               onClick={handleSaveChanges}
               disabled={!selectedInstructorId || reassignInstructorLoading}
-              startIcon={reassignInstructorLoading ? <CircularProgress size={20} color="inherit" /> : null}
+              startIcon={
+                reassignInstructorLoading ? (
+                  <CircularProgress size={20} color="inherit" />
+                ) : null
+              }
               sx={{
                 bgcolor: "#3b82f6",
                 "&:hover": { bgcolor: "#2563eb" },
@@ -795,7 +1003,9 @@ const ReAssignCourses = () => {
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
-            Are you sure you want to remove <strong>{deleteCourseTrack?.courseName}</strong> from the <strong>{deleteCourseTrack?.trackName}</strong> track?
+            Are you sure you want to remove{" "}
+            <strong>{deleteCourseTrack?.courseName}</strong> from the{" "}
+            <strong>{deleteCourseTrack?.trackName}</strong> track?
           </Typography>
           <FormControlLabel
             control={
@@ -820,7 +1030,11 @@ const ReAssignCourses = () => {
             variant="contained"
             color="error"
             disabled={!isDeleteConfirmed || removeCourseFromTrackLoading}
-            startIcon={removeCourseFromTrackLoading ? <CircularProgress size={20} color="inherit" /> : null}
+            startIcon={
+              removeCourseFromTrackLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : null
+            }
             sx={{
               bgcolor: "#ef4444",
               "&:hover": { bgcolor: "#dc2626" },

@@ -17,7 +17,7 @@
   
   .recommendation-form-header h2 {
     font-size: 2rem;
-    color: #333;
+    color: #1e1e1e;
     font-weight: bold;
   }
   
@@ -89,7 +89,7 @@
   .recommendation-title {
     font-size: 1.5rem;
     font-weight: bold;
-    color: #333;
+    color: #1e1e1e;
   }
   
   .recommendation-description {

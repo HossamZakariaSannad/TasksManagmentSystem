@@ -1,6 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchCourses, fetchIntakes, fetchIntakeCourses } from '../../redux/coursesSlice';
+import React, { useEffect, useState, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchCourses,
+  fetchIntakes,
+  fetchIntakeCourses,
+} from "../../redux/coursesSlice";
 import {
   Paper,
   Table,
@@ -27,16 +31,16 @@ import {
   DialogContentText,
   DialogTitle,
   Skeleton,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+} from "@mui/material";
+import { styled } from "@mui/material/styles";
 
 // Styled components for enhanced UI
 const StyledPaper = styled(Paper)(({ theme }) => ({
   borderRadius: theme.spacing(2),
-  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-  overflow: 'hidden',
+  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+  overflow: "hidden",
   margin: theme.spacing(3),
-  backgroundColor: '#ffffff',
+  backgroundColor: "#ffffff",
 }));
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -47,12 +51,12 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 }));
 
 const StyledTableRow = styled(TableRow)(() => ({
-  '&:nth-of-type(odd)': {
-    backgroundColor: '#f8fafc',
+  "&:nth-of-type(odd)": {
+    backgroundColor: "#f8fafc",
   },
-  '&:hover': {
-    backgroundColor: '#f1f5f9',
-    transition: 'background-color 0.2s ease-in-out',
+  "&:hover": {
+    backgroundColor: "#f1f5f9",
+    transition: "background-color 0.2s ease-in-out",
   },
 }));
 
@@ -60,7 +64,7 @@ const TrackChip = styled(Chip)(({ theme }) => ({
   margin: theme.spacing(0.5),
   backgroundColor: theme.palette.primary.main,
   color: theme.palette.primary.contrastText,
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.primary.dark,
   },
 }));
@@ -69,13 +73,15 @@ const TrackChip = styled(Chip)(({ theme }) => ({
 const formatDate = (dateString) => {
   try {
     const date = new Date(dateString);
-    return isNaN(date) ? 'Invalid Date' : date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
+    return isNaN(date)
+      ? "Invalid Date"
+      : date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
   } catch (e) {
-    return 'Invalid Date';
+    return "Invalid Date";
   }
 };
 
@@ -84,16 +90,16 @@ const sortRows = (rows, sortBy, sortOrder) => {
   return [...rows].sort((a, b) => {
     let aValue = a[sortBy];
     let bValue = b[sortBy];
-    if (sortBy === 'created_at') {
+    if (sortBy === "created_at") {
       aValue = new Date(a[sortBy]).getTime();
       bValue = new Date(b[sortBy]).getTime();
     }
-    if (sortBy === 'intake') {
-      aValue = a.intakeName || 'Not assigned';
-      bValue = b.intakeName || 'Not assigned';
+    if (sortBy === "intake") {
+      aValue = a.intakeName || "Not assigned";
+      bValue = b.intakeName || "Not assigned";
     }
-    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
     return 0;
   });
 };
@@ -104,13 +110,13 @@ const Courses = () => {
     userCourses: { tracks, track_courses },
     intakes,
     intakeCourses,
-    status: { 
-      fetchCoursesLoading, 
-      fetchCoursesError, 
-      fetchIntakesLoading, 
-      fetchIntakesError, 
-      fetchIntakeCoursesLoading, 
-      fetchIntakeCoursesError 
+    status: {
+      fetchCoursesLoading,
+      fetchCoursesError,
+      fetchIntakesLoading,
+      fetchIntakesError,
+      fetchIntakeCoursesLoading,
+      fetchIntakeCoursesError,
     },
   } = useSelector((state) => state.courses);
   const { user_id, username, role } = useSelector((state) => state.auth);
@@ -118,13 +124,13 @@ const Courses = () => {
   // State management
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [selectedTrack, setSelectedTrack] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState('');
-  const [selectedIntake, setSelectedIntake] = useState('');
-  const [createdAtFilter, setCreatedAtFilter] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [selectedTrack, setSelectedTrack] = useState("");
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedIntake, setSelectedIntake] = useState("");
+  const [createdAtFilter, setCreatedAtFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [openResetDialog, setOpenResetDialog] = useState(false);
 
   // Fetch courses and intakes on mount
@@ -180,9 +186,9 @@ const Courses = () => {
   };
 
   const handleSort = (columnId) => {
-    const isAsc = sortBy === columnId && sortOrder === 'asc';
+    const isAsc = sortBy === columnId && sortOrder === "asc";
     setSortBy(columnId);
-    setSortOrder(isAsc ? 'desc' : 'asc');
+    setSortOrder(isAsc ? "desc" : "asc");
   };
 
   const handleResetFilters = () => {
@@ -190,11 +196,11 @@ const Courses = () => {
   };
 
   const confirmResetFilters = () => {
-    setSelectedTrack('');
-    setSelectedCourse('');
-    setSelectedIntake('');
-    setCreatedAtFilter('');
-    setSearchTerm('');
+    setSelectedTrack("");
+    setSelectedCourse("");
+    setSelectedIntake("");
+    setCreatedAtFilter("");
+    setSearchTerm("");
     setPage(0);
     setOpenResetDialog(false);
   };
@@ -206,16 +212,21 @@ const Courses = () => {
       const course = courses.find((c) => c.id === courseId);
       if (course) {
         const intake = intakes.find((i) => i.id === parseInt(intakeId));
-        return intake?.name || 'Not assigned';
+        return intake?.name || "Not assigned";
       }
     }
-    return 'Not assigned';
+    return "Not assigned";
   };
 
   // Deduplicate courses by ID
   const uniqueCourses = useMemo(() => {
     const courseMap = new Map();
-    const courses = role === 'supervisor' ? track_courses || [] : track_courses?.filter((course) => course.instructor?.id === user_id) || [];
+    const courses =
+      role === "supervisor"
+        ? track_courses || []
+        : track_courses?.filter(
+            (course) => course.instructor?.id === user_id
+          ) || [];
 
     courses.forEach((course) => {
       if (!courseMap.has(course.id)) {
@@ -242,12 +253,12 @@ const Courses = () => {
 
   // Table columns
   const columns = [
-    { id: 'name', label: 'Course Name', minWidth: 170 },
-    { id: 'description', label: 'Description', minWidth: 200 },
-    { id: 'instructor', label: 'Instructor', minWidth: 150 },
-    { id: 'intake', label: 'Intake', minWidth: 150 },
-    { id: 'tracks', label: 'Tracks', minWidth: 200 },
-    { id: 'created_at', label: 'Created Date', minWidth: 120 },
+    { id: "name", label: "Course Name", minWidth: 170 },
+    { id: "description", label: "Description", minWidth: 200 },
+    { id: "instructor", label: "Instructor", minWidth: 150 },
+    { id: "intake", label: "Intake", minWidth: 150 },
+    { id: "tracks", label: "Tracks", minWidth: 200 },
+    { id: "created_at", label: "Created Date", minWidth: 120 },
   ];
 
   // Memoized filter options
@@ -256,7 +267,8 @@ const Courses = () => {
     uniqueCourses.forEach((course) => {
       if (course.tracks) {
         course.tracks.forEach((track) => {
-          const trackName = typeof track === 'object' ? track.name || track.id : track;
+          const trackName =
+            typeof track === "object" ? track.name || track.id : track;
           if (trackName) trackSet.add(trackName);
         });
       }
@@ -267,27 +279,38 @@ const Courses = () => {
   const trackNames = useMemo(() => allTracks, [allTracks]);
 
   const courseNames = useMemo(
-    () => [...new Set(uniqueCourses.map((course) => course.name))].filter(Boolean).sort((a, b) => a.localeCompare(b)),
+    () =>
+      [...new Set(uniqueCourses.map((course) => course.name))]
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b)),
     [uniqueCourses]
   );
 
   const intakeNames = useMemo(
-    () => [...new Set(intakes?.map((intake) => intake.name) || [])].sort((a, b) => a.localeCompare(b)),
+    () =>
+      [...new Set(intakes?.map((intake) => intake.name) || [])].sort((a, b) =>
+        a.localeCompare(b)
+      ),
     [intakes]
   );
 
   const createdDates = useMemo(
     () =>
-      [...new Set(
-        uniqueCourses.map((course) => {
-          try {
-            const date = new Date(course.created_at);
-            return isNaN(date) ? null : date.toISOString().split('T')[0];
-          } catch (e) {
-            return null;
-          }
-        })
-      )].filter((date) => date !== null).sort().reverse(),
+      [
+        ...new Set(
+          uniqueCourses.map((course) => {
+            try {
+              const date = new Date(course.created_at);
+              return isNaN(date) ? null : date.toISOString().split("T")[0];
+            } catch (e) {
+              return null;
+            }
+          })
+        ),
+      ]
+        .filter((date) => date !== null)
+        .sort()
+        .reverse(),
     [uniqueCourses]
   );
 
@@ -295,13 +318,19 @@ const Courses = () => {
   const filteredCourses = useMemo(() => {
     const result = uniqueCourses.filter((course) => {
       const courseTracks = course.tracks
-        ? course.tracks.map((t) => (typeof t === 'object' ? t.name || t.id : t))
+        ? course.tracks.map((t) => (typeof t === "object" ? t.name || t.id : t))
         : [];
-      const courseDate = new Date(course.created_at).toISOString().split('T')[0];
+      const courseDate = new Date(course.created_at)
+        .toISOString()
+        .split("T")[0];
       const courseIntake = course.intakeName || getIntakeName(course.id);
       const matchesSearch = searchTerm
-        ? (course.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (course.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+        ? (course.name || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (course.description || "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
         : true;
       return (
         matchesSearch &&
@@ -311,22 +340,33 @@ const Courses = () => {
         (!createdAtFilter || courseDate === createdAtFilter)
       );
     });
-    console.log('Filtered courses:', result);
+    console.log("Filtered courses:", result);
     return result;
-  }, [uniqueCourses, searchTerm, selectedTrack, selectedCourse, selectedIntake, createdAtFilter]);
+  }, [
+    uniqueCourses,
+    searchTerm,
+    selectedTrack,
+    selectedCourse,
+    selectedIntake,
+    createdAtFilter,
+  ]);
 
   // Prepare table rows
   const rows = useMemo(
     () =>
       filteredCourses.map((course) => {
         const courseTracks = course.tracks
-          ? course.tracks.map((t) => (typeof t === 'object' ? t.name || t.id : t))
+          ? course.tracks.map((t) =>
+              typeof t === "object" ? t.name || t.id : t
+            )
           : [];
         const instructorName = course.instructor
-          ? typeof course.instructor === 'object'
-            ? course.instructor.name || course.instructor.username || `ID: ${course.instructor.id}`
+          ? typeof course.instructor === "object"
+            ? course.instructor.name ||
+              course.instructor.username ||
+              `ID: ${course.instructor.id}`
             : `ID: ${course.instructor}`
-          : 'Not assigned';
+          : "Not assigned";
         return {
           id: course.id,
           name: course.name,
@@ -341,39 +381,80 @@ const Courses = () => {
   );
 
   // Sorted rows
-  const sortedRows = useMemo(() => sortRows(rows, sortBy, sortOrder), [rows, sortBy, sortOrder]);
+  const sortedRows = useMemo(
+    () => sortRows(rows, sortBy, sortOrder),
+    [rows, sortBy, sortOrder]
+  );
 
   // Combined loading state
-  const isLoading = fetchCoursesLoading || fetchIntakesLoading || fetchIntakeCoursesLoading;
+  const isLoading =
+    fetchCoursesLoading || fetchIntakesLoading || fetchIntakeCoursesLoading;
 
   // Combined error state
-  const hasError = fetchCoursesError || fetchIntakesError || fetchIntakeCoursesError;
+  const hasError =
+    fetchCoursesError || fetchIntakesError || fetchIntakeCoursesError;
 
   // Loading state
   if (isLoading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px', bgcolor: '#f4f6f8' }}>
-        <Box sx={{ width: '100%', maxWidth: '1200px' }}>
-          <Skeleton variant="rectangular" height={60} sx={{ mb: 2, borderRadius: 2 }} />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "200px",
+        }}
+      >
+        <Box sx={{ width: "100%", maxWidth: "1200px" }}>
+          <Skeleton
+            variant="rectangular"
+            height={60}
+            sx={{ mb: 2, borderRadius: 2 }}
+          />
           <Grid container spacing={3} sx={{ mb: 3 }}>
             <Grid item xs={12} md={4}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={2}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={2}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={2}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
             <Grid item xs={12} md={2}>
-              <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant="rectangular"
+                height={56}
+                sx={{ borderRadius: 2 }}
+              />
             </Grid>
           </Grid>
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} variant="rectangular" height={40} sx={{ mb: 1, borderRadius: 2 }} />
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              height={40}
+              sx={{ mb: 1, borderRadius: 2 }}
+            />
           ))}
         </Box>
       </Box>
@@ -383,9 +464,18 @@ const Courses = () => {
   // Error state
   if (hasError) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px', bgcolor: '#f4f6f8' }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "200px",
+        }}
+      >
         <Typography color="error" variant="h6" sx={{ mb: 2 }}>
-          Error loading data: {fetchCoursesError || fetchIntakesError || fetchIntakeCoursesError}
+          Error loading data:{" "}
+          {fetchCoursesError || fetchIntakesError || fetchIntakeCoursesError}
         </Typography>
         <Button
           variant="contained"
@@ -393,9 +483,15 @@ const Courses = () => {
           onClick={() => {
             dispatch(fetchCourses(user_id));
             dispatch(fetchIntakes());
-            intakes?.forEach((intake) => dispatch(fetchIntakeCourses(intake.id)));
+            intakes?.forEach((intake) =>
+              dispatch(fetchIntakeCourses(intake.id))
+            );
           }}
-          sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2 }}
+          sx={{
+            bgcolor: "#3b82f6",
+            "&:hover": { bgcolor: "#2563eb" },
+            borderRadius: 2,
+          }}
         >
           Retry
         </Button>
@@ -406,8 +502,16 @@ const Courses = () => {
   // Empty data state
   if (!uniqueCourses.length && !intakes?.length) {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px', bgcolor: '#f4f6f8' }}>
-        <Typography variant="h6" sx={{ mb: 2, color: '#64748b' }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "200px",
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 2, color: "#64748b" }}>
           No courses or intakes available
         </Typography>
         <Button
@@ -417,7 +521,11 @@ const Courses = () => {
             dispatch(fetchCourses(user_id));
             dispatch(fetchIntakes());
           }}
-          sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2 }}
+          sx={{
+            bgcolor: "#3b82f6",
+            "&:hover": { bgcolor: "#2563eb" },
+            borderRadius: 2,
+          }}
         >
           Retry
         </Button>
@@ -426,22 +534,30 @@ const Courses = () => {
   }
 
   return (
-    <Box sx={{ p: 3, bgcolor: '#f4f6f8', minHeight: '100vh' }}>
+    <Box sx={{ p: 3, minHeight: "100vh" }}>
       <Typography
         variant="h4"
-        sx={{ fontWeight: 700, color: '#1e3a8a', mb: 2, textAlign: 'center' }}
+        sx={{ fontWeight: 700, color: "#1e1e1e", mb: 2, textAlign: "center" }}
       >
         Courses Management
       </Typography>
       <Typography
         variant="subtitle1"
-        sx={{ color: '#64748b', mb: 3, textAlign: 'center' }}
+        sx={{ color: "#64748b", mb: 3, textAlign: "center" }}
       >
-        Viewing courses for: <Box component="span" sx={{ fontWeight: 600 }}>{username}</Box> ({role})
+        Viewing courses for:{" "}
+        <Box component="span" sx={{ fontWeight: 600 }}>
+          {username}
+        </Box>{" "}
+        ({role})
       </Typography>
 
       {/* Search and Filters */}
-      <Grid container spacing={3} sx={{ mb: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 3, maxWidth: "1200px", mx: "auto" }}
+      >
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
@@ -450,7 +566,7 @@ const Courses = () => {
             placeholder="Search by name or description"
             value={searchTerm}
             onChange={handleSearchChange}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
           />
         </Grid>
         <Grid item xs={12} md={2}>
@@ -462,9 +578,13 @@ const Courses = () => {
               label="Course"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Courses</em></MenuItem>
+              <MenuItem value="">
+                <em>All Courses</em>
+              </MenuItem>
               {courseNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -478,9 +598,13 @@ const Courses = () => {
               label="Track"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Tracks</em></MenuItem>
+              <MenuItem value="">
+                <em>All Tracks</em>
+              </MenuItem>
               {trackNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -494,9 +618,13 @@ const Courses = () => {
               label="Intake"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Intakes</em></MenuItem>
+              <MenuItem value="">
+                <em>All Intakes</em>
+              </MenuItem>
               {intakeNames.map((name) => (
-                <MenuItem key={name} value={name}>{name}</MenuItem>
+                <MenuItem key={name} value={name}>
+                  {name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -510,9 +638,13 @@ const Courses = () => {
               label="Date"
               sx={{ borderRadius: 2 }}
             >
-              <MenuItem value=""><em>All Dates</em></MenuItem>
+              <MenuItem value="">
+                <em>All Dates</em>
+              </MenuItem>
               {createdDates.map((date) => (
-                <MenuItem key={date} value={date}>{date}</MenuItem>
+                <MenuItem key={date} value={date}>
+                  {date}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -523,9 +655,9 @@ const Courses = () => {
             variant="contained"
             onClick={handleResetFilters}
             sx={{
-              height: '56px',
-              bgcolor: '#3b82f6',
-              '&:hover': { bgcolor: '#2563eb' },
+              height: "56px",
+              bgcolor: "#3b82f6",
+              "&:hover": { bgcolor: "#2563eb" },
               borderRadius: 2,
             }}
           >
@@ -535,21 +667,21 @@ const Courses = () => {
       </Grid>
 
       {/* Table */}
-      <StyledPaper sx={{ maxWidth: '1200px', mx: 'auto' }}>
-        <TableContainer sx={{ maxHeight: 'calc(100vh - 300px)' }}>
+      <StyledPaper sx={{ maxWidth: "1200px", mx: "auto" }}>
+        <TableContainer sx={{ maxHeight: "calc(100vh - 300px)" }}>
           <Table stickyHeader aria-label="courses table">
             <TableHead>
               <TableRow>
                 {columns.map((column) => (
                   <StyledTableCell
                     key={column.id}
-                    sx={{ minWidth: column.minWidth, cursor: 'pointer' }}
+                    sx={{ minWidth: column.minWidth, cursor: "pointer" }}
                     onClick={() => handleSort(column.id)}
                   >
                     {column.label}
                     {sortBy === column.id && (
                       <Box component="span" sx={{ ml: 1 }}>
-                        {sortOrder === 'asc' ? '↑' : '↓'}
+                        {sortOrder === "asc" ? "↑" : "↓"}
                       </Box>
                     )}
                   </StyledTableCell>
@@ -566,12 +698,12 @@ const Courses = () => {
                       <TableCell sx={{ p: 2, maxWidth: 300 }}>
                         <Box
                           sx={{
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            '&:hover': {
-                              whiteSpace: 'normal',
-                              overflow: 'visible',
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            "&:hover": {
+                              whiteSpace: "normal",
+                              overflow: "visible",
                             },
                           }}
                         >
@@ -581,7 +713,7 @@ const Courses = () => {
                       <TableCell sx={{ p: 2 }}>{row.instructor}</TableCell>
                       <TableCell sx={{ p: 2 }}>{row.intake}</TableCell>
                       <TableCell sx={{ p: 2 }}>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                        <Box sx={{ display: "flex", flexWrap: "wrap" }}>
                           {row.tracks.map((track, i) => (
                             <TrackChip
                               key={`${row.id}-${track}-${i}`}
@@ -597,8 +729,12 @@ const Courses = () => {
                   ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body1" sx={{ color: '#64748b' }}>
+                  <TableCell
+                    colSpan={columns.length}
+                    align="center"
+                    sx={{ py: 4 }}
+                  >
+                    <Typography variant="body1" sx={{ color: "#64748b" }}>
                       No courses found matching your criteria
                     </Typography>
                   </TableCell>
@@ -610,24 +746,31 @@ const Courses = () => {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50]}
           component="div"
-          count={sortedRows.length}
+          count={rows.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
-          sx={{ borderTop: '1px solid rgba(0, 0, 0, 0.12)' }}
+          sx={{
+            borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+            ".MuiTablePagination-displayedRows, .MuiTablePagination-selectLabel":
+              {
+                margin: "auto",
+              },
+            ".MuiTablePagination-toolbar": {
+              justifyContent: "center",
+            },
+          }}
         />
       </StyledPaper>
 
       {/* Reset Filters Dialog */}
-      <Dialog
-        open={openResetDialog}
-        onClose={() => setOpenResetDialog(false)}
-      >
+      <Dialog open={openResetDialog} onClose={() => setOpenResetDialog(false)}>
         <DialogTitle>Reset Filters</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to reset all filters? This will clear all your current selections.
+            Are you sure you want to reset all filters? This will clear all your
+            current selections.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -638,7 +781,7 @@ const Courses = () => {
             onClick={confirmResetFilters}
             color="primary"
             variant="contained"
-            sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' } }}
+            sx={{ bgcolor: "#3b82f6", "&:hover": { bgcolor: "#2563eb" } }}
           >
             Confirm
           </Button>

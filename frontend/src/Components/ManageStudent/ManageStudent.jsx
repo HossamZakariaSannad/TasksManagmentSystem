@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -21,20 +21,25 @@ import {
   Select,
   MenuItem,
   CircularProgress,
-} from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
+} from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
 import {
   updateStudent,
   deleteStudent,
   clearStudentsState,
-} from '../../redux/studentsSlice';
-import { fetchStudentsByStaff } from '../../redux/staffSlice';
-import { fetchCourses } from '../../redux/coursesSlice';
-import apiClient from '../../services/api';
+} from "../../redux/studentsSlice";
+import { fetchStudentsByStaff } from "../../redux/staffSlice";
+import { fetchCourses } from "../../redux/coursesSlice";
+import apiClient from "../../services/api";
 
 const ManageStudents = () => {
   const dispatch = useDispatch();
-  const { studentsByStaff: students, studentsLoading: loading, studentsError: error, message } = useSelector((state) => state.staff);
+  const {
+    studentsByStaff: students,
+    studentsLoading: loading,
+    studentsError: error,
+    message,
+  } = useSelector((state) => state.staff);
   const { user_id } = useSelector((state) => state.auth);
   const { userCourses, status } = useSelector((state) => state.courses);
   const tracks = userCourses?.tracks || [];
@@ -44,19 +49,19 @@ const ManageStudents = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editData, setEditData] = useState({
     studentId: null,
-    username: '',
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    track: '',
+    username: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    track: "",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
-  const [localError, setLocalError] = useState('');
-  const [selectedTrackId, setSelectedTrackId] = useState('');
-  const [selectedIntakeId, setSelectedIntakeId] = useState('');
-  const [searchName, setSearchName] = useState('');
+  const [localError, setLocalError] = useState("");
+  const [selectedTrackId, setSelectedTrackId] = useState("");
+  const [selectedIntakeId, setSelectedIntakeId] = useState("");
+  const [searchName, setSearchName] = useState("");
   const [intakes, setIntakes] = useState([]);
   const [intakesLoading, setIntakesLoading] = useState(false);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -76,7 +81,7 @@ const ManageStudents = () => {
       fetchIntakes(selectedTrackId);
     } else {
       setIntakes([]);
-      setSelectedIntakeId('');
+      setSelectedIntakeId("");
       setIntakesLoading(false);
     }
   }, [selectedTrackId]);
@@ -96,7 +101,7 @@ const ManageStudents = () => {
     if (error || tracksError) {
       setLocalError(error || tracksError);
     } else {
-      setLocalError('');
+      setLocalError("");
     }
   }, [error, tracksError]);
 
@@ -111,42 +116,57 @@ const ManageStudents = () => {
   // Debug student data, tracks, and intakes
   useEffect(() => {
     if (filteredStudents.length > 0) {
-      console.log('Student objects (first 3):', filteredStudents.slice(0, 3).map(s => ({
-        id: s.id,
-        track: s.track,
-        track_id: s.track_id,
-        trackId: s.trackId,
-        intake: s.intake,
-        intake_id: s.intake_id,
-        intakeId: s.intakeId,
-        fullObject: s,
-      })));
-      console.log('Parsed track names:', filteredStudents.slice(0, 3).map(s => ({
-        id: s.id,
-        rawTrackName: s.track?.name || s.track_id,
-        parsedTrackName: getTrackName(s),
-      })));
-      console.log('Parsed intake names:', filteredStudents.slice(0, 3).map(s => ({
-        id: s.id,
-        rawIntakeName: s.intake?.name || s.intake_id,
-        parsedIntakeName: getIntakeName(s),
-      })));
+      console.log(
+        "Student objects (first 3):",
+        filteredStudents.slice(0, 3).map((s) => ({
+          id: s.id,
+          track: s.track,
+          track_id: s.track_id,
+          trackId: s.trackId,
+          intake: s.intake,
+          intake_id: s.intake_id,
+          intakeId: s.intakeId,
+          fullObject: s,
+        }))
+      );
+      console.log(
+        "Parsed track names:",
+        filteredStudents.slice(0, 3).map((s) => ({
+          id: s.id,
+          rawTrackName: s.track?.name || s.track_id,
+          parsedTrackName: getTrackName(s),
+        }))
+      );
+      console.log(
+        "Parsed intake names:",
+        filteredStudents.slice(0, 3).map((s) => ({
+          id: s.id,
+          rawIntakeName: s.intake?.name || s.intake_id,
+          parsedIntakeName: getIntakeName(s),
+        }))
+      );
     }
-    console.log('Tracks:', tracks.map(t => ({ id: t.id, name: t.name })));
-    console.log('Intakes:', intakes.map(i => ({ id: i.id, name: i.name })));
+    console.log(
+      "Tracks:",
+      tracks.map((t) => ({ id: t.id, name: t.name }))
+    );
+    console.log(
+      "Intakes:",
+      intakes.map((i) => ({ id: i.id, name: i.name }))
+    );
   }, [filteredStudents, tracks, intakes]);
 
   const fetchIntakes = async (trackId) => {
     setIntakesLoading(true);
     try {
-      const response = await apiClient.get('/student/intakes/', {
+      const response = await apiClient.get("/student/intakes/", {
         params: { track_id: trackId },
       });
-      console.log('Intakes API response:', response.data.intakes);
+      console.log("Intakes API response:", response.data.intakes);
       setIntakes(response.data.intakes || []);
-      setSelectedIntakeId(''); // Reset intake selection
+      setSelectedIntakeId(""); // Reset intake selection
     } catch (err) {
-      setLocalError(err.response?.data?.error || 'Failed to fetch intakes.');
+      setLocalError(err.response?.data?.error || "Failed to fetch intakes.");
       setIntakes([]);
     } finally {
       setIntakesLoading(false);
@@ -156,13 +176,18 @@ const ManageStudents = () => {
   const fetchStudentsByIntake = async (intakeId) => {
     setStudentsLoading(true);
     try {
-      const response = await apiClient.get('/student/list/', {
+      const response = await apiClient.get("/student/list/", {
         params: { intake_id: intakeId },
       });
-      console.log('Students API response for intake_id', intakeId, ':', response.data.students);
+      console.log(
+        "Students API response for intake_id",
+        intakeId,
+        ":",
+        response.data.students
+      );
       setFilteredStudents(response.data.students || []);
     } catch (err) {
-      setLocalError(err.response?.data?.error || 'Failed to fetch students.');
+      setLocalError(err.response?.data?.error || "Failed to fetch students.");
       setFilteredStudents([]);
     } finally {
       setStudentsLoading(false);
@@ -176,20 +201,21 @@ const ManageStudents = () => {
       firstName: student.first_name,
       lastName: student.last_name,
       email: student.email,
-      password: '',
+      password: "",
       track: getTrackName(student),
     });
     setEditDialogOpen(true);
   };
 
   const handleEditChange = async () => {
-    const { studentId, username, firstName, lastName, email, password, track } = editData;
+    const { studentId, username, firstName, lastName, email, password, track } =
+      editData;
     if (!username && !firstName && !lastName && !email && !track && !password) {
-      setLocalError('At least one field must be changed.');
+      setLocalError("At least one field must be changed.");
       return;
     }
     if (password && password.length < 6) {
-      setLocalError('Password must be at least 6 characters long.');
+      setLocalError("Password must be at least 6 characters long.");
       return;
     }
     try {
@@ -211,7 +237,7 @@ const ManageStudents = () => {
         dispatch(fetchStudentsByStaff(user_id));
       }
     } catch (err) {
-      setLocalError(err.message || 'Failed to update student.');
+      setLocalError(err.message || "Failed to update student.");
     }
   };
 
@@ -222,7 +248,7 @@ const ManageStudents = () => {
 
   const handleDelete = async () => {
     if (!studentToDelete) {
-      setLocalError('No student selected for deletion.');
+      setLocalError("No student selected for deletion.");
       return;
     }
     try {
@@ -235,13 +261,13 @@ const ManageStudents = () => {
         dispatch(fetchStudentsByStaff(user_id));
       }
     } catch (err) {
-      setLocalError(err.message || 'Failed to delete student.');
+      setLocalError(err.message || "Failed to delete student.");
     }
   };
 
   const handleTrackFilterChange = (event) => {
     setSelectedTrackId(event.target.value);
-    setSelectedIntakeId(''); // Reset intake when track changes
+    setSelectedIntakeId(""); // Reset intake when track changes
   };
 
   const handleIntakeFilterChange = (event) => {
@@ -253,9 +279,9 @@ const ManageStudents = () => {
   };
 
   const handleResetFilters = () => {
-    setSelectedTrackId('');
-    setSelectedIntakeId('');
-    setSearchName('');
+    setSelectedTrackId("");
+    setSelectedIntakeId("");
+    setSearchName("");
   };
 
   // Filter students by name
@@ -272,32 +298,32 @@ const ManageStudents = () => {
 
   // Helper functions to get track and intake names
   const getTrackName = (student) => {
-    let trackName = '';
+    let trackName = "";
     if (student.track?.name) {
       trackName = student.track.name;
     } else if (student.track_id) {
       const track = tracks.find((t) => t.id === student.track_id);
-      trackName = track?.name || '';
-    } else if (typeof student.track === 'string') {
+      trackName = track?.name || "";
+    } else if (typeof student.track === "string") {
       trackName = student.track;
     }
     // Extract core track name (e.g., "Full Stack Python" from "Full Stack Python (mena nagy) - Branch: New Capital")
     if (trackName) {
       // Split on first parenthesis or remove branch details
-      const coreName = trackName.split(' (')[0].trim();
-      return coreName || 'N/A';
+      const coreName = trackName.split(" (")[0].trim();
+      return coreName || "N/A";
     }
-    return 'N/A';
+    return "N/A";
   };
 
   const getIntakeName = (student) => {
-    let intakeName = '';
+    let intakeName = "";
     if (student.intake?.name) {
       intakeName = student.intake.name;
     } else if (student.intake_id) {
       const intake = intakes.find((i) => i.id === student.intake_id);
       intakeName = intake?.name || String(student.intake_id);
-    } else if (typeof student.intake === 'string') {
+    } else if (typeof student.intake === "string") {
       intakeName = student.intake;
     } else if (selectedIntakeId) {
       const intake = intakes.find((i) => i.id === selectedIntakeId);
@@ -305,20 +331,28 @@ const ManageStudents = () => {
     }
     // Extract core intake name (e.g., "2" from "2 (Track: Full Stack Python)")
     if (intakeName) {
-      const coreName = intakeName.split(' (')[0].trim();
-      return coreName || 'N/A';
+      const coreName = intakeName.split(" (")[0].trim();
+      return coreName || "N/A";
     }
-    return 'N/A';
+    return "N/A";
   };
 
   return (
-    <Box sx={{ p: 4, bgcolor: '#f4f6f8' }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, color: '#1e3a8a', textAlign: 'center' }}>
+    <Box sx={{ p: 4 }}>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{ fontWeight: 700, color: "#1e1e1e", textAlign: "center" }}
+      >
         Manage Students
       </Typography>
 
       {/* Filters and Search */}
-      <Grid container spacing={3} sx={{ mb: 3, maxWidth: '1200px', mx: 'auto' }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 3, maxWidth: "1200px", mx: "auto" }}
+      >
         <Grid item xs={12} sm={4}>
           <FormControl variant="outlined" fullWidth>
             <InputLabel>Track</InputLabel>
@@ -329,9 +363,13 @@ const ManageStudents = () => {
               sx={{ borderRadius: 2 }}
               disabled={tracksLoading}
             >
-              <MenuItem value=""><em>All Tracks</em></MenuItem>
+              <MenuItem value="">
+                <em>All Tracks</em>
+              </MenuItem>
               {tracks.map((track) => (
-                <MenuItem key={track.id} value={track.id}>{track.name.split(' (')[0].trim()}</MenuItem>
+                <MenuItem key={track.id} value={track.id}>
+                  {track.name.split(" (")[0].trim()}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -344,16 +382,23 @@ const ManageStudents = () => {
               onChange={handleIntakeFilterChange}
               label="Intake"
               sx={{ borderRadius: 2 }}
-              disabled={intakesLoading || !selectedTrackId || intakes.length === 0}
+              disabled={
+                intakesLoading || !selectedTrackId || intakes.length === 0
+              }
             >
-              <MenuItem value=""><em>All Intakes</em></MenuItem>
+              <MenuItem value="">
+                <em>All Intakes</em>
+              </MenuItem>
               {intakesLoading ? (
                 <MenuItem disabled>
-                  <CircularProgress size={20} sx={{ mr: 1 }} /> Loading intakes...
+                  <CircularProgress size={20} sx={{ mr: 1 }} /> Loading
+                  intakes...
                 </MenuItem>
               ) : (
                 intakes.map((intake) => (
-                  <MenuItem key={intake.id} value={intake.id}>{intake.name.split(' (')[0].trim()}</MenuItem>
+                  <MenuItem key={intake.id} value={intake.id}>
+                    {intake.name.split(" (")[0].trim()}
+                  </MenuItem>
                 ))
               )}
             </Select>
@@ -375,9 +420,9 @@ const ManageStudents = () => {
             variant="contained"
             onClick={handleResetFilters}
             sx={{
-              height: '56px',
-              bgcolor: '#3b82f6',
-              '&:hover': { bgcolor: '#2563eb' },
+              height: "56px",
+              bgcolor: "#3b82f6",
+              "&:hover": { bgcolor: "#2563eb" },
               borderRadius: 2,
             }}
           >
@@ -388,43 +433,73 @@ const ManageStudents = () => {
 
       {/* Error Alert */}
       {localError && (
-        <Alert severity="error" sx={{ mb: 2, maxWidth: '1200px', mx: 'auto' }}>
+        <Alert severity="error" sx={{ mb: 2, maxWidth: "1200px", mx: "auto" }}>
           {localError}
         </Alert>
       )}
       {/* Success Message Alert */}
       {message && (
-        <Alert severity="success" sx={{ mb: 2, maxWidth: '1200px', mx: 'auto' }}>
+        <Alert
+          severity="success"
+          sx={{ mb: 2, maxWidth: "1200px", mx: "auto" }}
+        >
           {message}
         </Alert>
       )}
 
-      <Paper sx={{ p: 2, maxWidth: '1200px', mx: 'auto', borderRadius: 2, boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)' }}>
+      <Paper
+        sx={{
+          p: 2,
+          maxWidth: "1200px",
+          mx: "auto",
+          borderRadius: 2,
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+        }}
+      >
         <Typography variant="h6" gutterBottom>
           Student List
         </Typography>
 
         {loading || tracksLoading || studentsLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
             <CircularProgress />
           </Box>
         ) : displayedStudents.length > 0 ? (
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>ID</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>Username</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>First Name</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>Last Name</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>Email</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>Track</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>Intake</TableCell>
-                <TableCell sx={{ fontWeight: 600, bgcolor: '#f1f5f9' }}>Actions</TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  ID
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  Username
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  First Name
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  Last Name
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  Email
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  Track
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  Intake
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, bgcolor: "#f1f5f9" }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {displayedStudents.map((student) => (
-                <TableRow key={student.id} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
+                <TableRow
+                  key={student.id}
+                  sx={{ "&:hover": { bgcolor: "#f8fafc" } }}
+                >
                   <TableCell>{student.id}</TableCell>
                   <TableCell>{student.username}</TableCell>
                   <TableCell>{student.first_name}</TableCell>
@@ -433,7 +508,10 @@ const ManageStudents = () => {
                   <TableCell>{getTrackName(student)}</TableCell>
                   <TableCell>{getIntakeName(student)}</TableCell>
                   <TableCell>
-                    <Button size="small" onClick={() => openEditDialog(student)}>
+                    <Button
+                      size="small"
+                      onClick={() => openEditDialog(student)}
+                    >
                       Edit
                     </Button>
                     <Button
@@ -463,7 +541,9 @@ const ManageStudents = () => {
             variant="outlined"
             fullWidth
             value={editData.firstName}
-            onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, firstName: e.target.value })
+            }
             sx={{ mb: 2 }}
           />
           <TextField
@@ -471,7 +551,9 @@ const ManageStudents = () => {
             variant="outlined"
             fullWidth
             value={editData.lastName}
-            onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, lastName: e.target.value })
+            }
             sx={{ mb: 2 }}
           />
           <TextField
@@ -479,7 +561,9 @@ const ManageStudents = () => {
             variant="outlined"
             fullWidth
             value={editData.email}
-            onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, email: e.target.value })
+            }
             sx={{ mb: 2 }}
           />
           <TextField
@@ -488,18 +572,27 @@ const ManageStudents = () => {
             fullWidth
             type="password"
             value={editData.password}
-            onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, password: e.target.value })
+            }
             sx={{ mb: 2 }}
           />
           <FormControl variant="outlined" fullWidth sx={{ mb: 2 }}>
             <InputLabel>Track</InputLabel>
             <Select
               value={editData.track}
-              onChange={(e) => setEditData({ ...editData, track: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, track: e.target.value })
+              }
               label="Track"
             >
               {tracks.map((track) => (
-                <MenuItem key={track.id} value={track.name.split(' (')[0].trim()}>{track.name.split(' (')[0].trim()}</MenuItem>
+                <MenuItem
+                  key={track.id}
+                  value={track.name.split(" (")[0].trim()}
+                >
+                  {track.name.split(" (")[0].trim()}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -515,7 +608,10 @@ const ManageStudents = () => {
       </Dialog>
 
       {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
         <DialogTitle>Delete Student</DialogTitle>
         <DialogContent>
           <Typography>Are you sure you want to delete this student?</Typography>

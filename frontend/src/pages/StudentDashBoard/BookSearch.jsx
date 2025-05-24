@@ -1,8 +1,21 @@
-import React, { useState, useEffect, useCallback, Component } from 'react';
-import { Box, Card, CardHeader, CardContent, TextField, Button, Select, MenuItem, CircularProgress, Alert, Typography, Grid } from '@mui/material';
-import { FiBook } from 'react-icons/fi';
-import axios from 'axios';
-import './BookSearch.css';
+import React, { useState, useEffect, useCallback, Component } from "react";
+import {
+  Box,
+  Card,
+  CardHeader,
+  CardContent,
+  TextField,
+  Button,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Alert,
+  Typography,
+  Grid,
+} from "@mui/material";
+import { FiBook } from "react-icons/fi";
+import axios from "axios";
+import "./BookSearch.css";
 
 // Error Boundary for BookSearch
 class BookSearchErrorBoundary extends Component {
@@ -20,7 +33,7 @@ class BookSearchErrorBoundary extends Component {
             Failed to load Book Search.
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Error: {this.state.error?.message || 'Unknown error'}
+            Error: {this.state.error?.message || "Unknown error"}
           </Typography>
         </Box>
       );
@@ -42,38 +55,40 @@ const useDebounce = (callback, delay) => {
 };
 
 const BookSearch = () => {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [maxResults, setMaxResults] = useState(5);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
-  const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';;
-  console.log('BookSearch Component Rendered'); // Debug log
+  const API_URL =
+    import.meta.env.VITE_API_URL ||
+    "https://task-project-backend-1hx7.onrender.com";
+  console.log("BookSearch Component Rendered"); // Debug log
 
   const handleSearch = async () => {
     if (!query.trim()) {
-      setError('Please enter a search query');
+      setError("Please enter a search query");
       return;
     }
     if (retryCount >= maxRetries) {
-      setError('Maximum retry attempts reached');
+      setError("Maximum retry attempts reached");
       return;
     }
     setLoading(true);
-    setError('');
+    setError("");
     try {
-      console.log('Fetching books:', { query, maxResults }); // Debug log
+      console.log("Fetching books:", { query, maxResults }); // Debug log
       const res = await axios.get(`${API_URL}/book_search/search/`, {
         params: { query, max_results: maxResults },
       });
-      console.log('Book API Response:', res.data); // Debug log
+      console.log("Book API Response:", res.data); // Debug log
       setBooks(res.data || []);
       setRetryCount(0);
     } catch (err) {
-      console.error('Book Search Error:', err); // Debug log
-      setError('Failed to fetch books: ' + err.message);
+      console.error("Book Search Error:", err); // Debug log
+      setError("Failed to fetch books: " + err.message);
       if (retryCount < maxRetries) {
         setTimeout(() => {
           setRetryCount((prev) => prev + 1);
@@ -88,17 +103,17 @@ const BookSearch = () => {
   const debouncedHandleSearch = useDebounce(handleSearch, 500);
 
   useEffect(() => {
-    console.log('BookSearch Mounted'); // Debug log
-    return () => console.log('BookSearch Unmounted'); // Debug log
+    console.log("BookSearch Mounted"); // Debug log
+    return () => console.log("BookSearch Unmounted"); // Debug log
   }, []);
 
   return (
     <BookSearchErrorBoundary>
       <Box className="book-search-container">
-        <Card elevation={3} sx={{ borderTop: '4px solid #00897b' }}>
+        <Card elevation={3} sx={{ borderTop: "4px solid #1976d2" }}>
           <CardHeader
             title="Book Search"
-            avatar={<FiBook style={{ color: '#00897b' }} />}
+            avatar={<FiBook style={{ color: "#1976d2" }} />}
             subheader="Find books by title, author, or subject"
           />
           <CardContent>
@@ -111,7 +126,7 @@ const BookSearch = () => {
                   setQuery(e.target.value);
                   debouncedHandleSearch();
                 }}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 sx={{ flex: 1, minWidth: 200 }}
                 aria-label="Search books by title, author, or subject"
               />
@@ -132,16 +147,23 @@ const BookSearch = () => {
                 startIcon={<FiBook />}
                 onClick={handleSearch}
                 disabled={loading || !query.trim()}
-                sx={{ backgroundColor: '#00897b', '&:hover': { backgroundColor: '#00796b' } }}
+                sx={{
+                  backgroundColor: "#1976d2",
+                  "&:hover": { backgroundColor: "#00796b" },
+                }}
                 aria-label="Search books"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading ? "Searching..." : "Search"}
               </Button>
             </Box>
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
             {loading ? (
               <Box display="flex" justifyContent="center" my={4}>
-                <CircularProgress sx={{ color: '#00897b' }} />
+                <CircularProgress sx={{ color: "#1976d2" }} />
               </Box>
             ) : books.length > 0 ? (
               <Grid container spacing={2}>
@@ -149,15 +171,30 @@ const BookSearch = () => {
                   <Grid item xs={12} sm={6} md={4} key={index}>
                     <Card className="book-card">
                       <CardContent>
-                        <Typography variant="h6" className="book-title">{book.Title || 'Untitled'}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          <strong>Authors:</strong> {book.Authors || 'Unknown'}
+                        <Typography variant="h6" className="book-title">
+                          {book.Title || "Untitled"}
                         </Typography>
-                        <Typography variant="body2" sx={{ mt: 1, maxHeight: 80, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {book.Description || 'No description available'}
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Authors:</strong> {book.Authors || "Unknown"}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            mt: 1,
+                            maxHeight: 80,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {book.Description || "No description available"}
                         </Typography>
                         <Typography variant="body2" sx={{ mt: 1 }}>
-                          <a href={book.Link} target="_blank" rel="noopener noreferrer" className="book-link">
+                          <a
+                            href={book.Link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="book-link"
+                          >
                             More Info
                           </a>
                         </Typography>
@@ -167,8 +204,14 @@ const BookSearch = () => {
                 ))}
               </Grid>
             ) : (
-              <Typography variant="body1" color="text.secondary" textAlign="center" my={4}>
-                No books found yet. Try searching for a title, author, or subject.
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                textAlign="center"
+                my={4}
+              >
+                No books found yet. Try searching for a title, author, or
+                subject.
               </Typography>
             )}
           </CardContent>

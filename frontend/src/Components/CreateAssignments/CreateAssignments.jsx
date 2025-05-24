@@ -255,7 +255,7 @@ const CreateAssignment = () => {
           })
         );
       } else {
-        dispatch({ type: 'assignments/clearStudents' });
+        dispatch({ type: "assignments/clearStudents" });
       }
     }
   }, [dispatch, formData.track, formData.course, courses]);
@@ -287,11 +287,14 @@ const CreateAssignment = () => {
       }
 
       try {
-        const response = await fetch("https://task-project-backend-1hx7.onrender.com/api/chatAI/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: recommendationDialog.chatInput }),
-        });
+        const response = await fetch(
+          "https://task-project-backend-1hx7.onrender.com/api/chatAI/",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: recommendationDialog.chatInput }),
+          }
+        );
 
         const data = await response.json();
         if (response.ok) {
@@ -330,18 +333,22 @@ const CreateAssignment = () => {
       return;
     }
 
-   let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
-if (recommendationDialog.methodChoice === "1") {
-  const course = courses.find((c) => c.id === formData.course);
-  const courseName = course ? course.name : "";
-  const intakeName = course && course.intake ? course.intake.name : "";
-  url += `&course_name=${encodeURIComponent(courseName)}&difficulty=${encodeURIComponent(formData.difficulty)}`;
-  if (intakeName) {
-    url += `&intake_name=${encodeURIComponent(intakeName)}`;
-  }
-} else {
-  url += `&brief_description=${encodeURIComponent(recommendationDialog.briefDescription)}`;
-}
+    let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
+    if (recommendationDialog.methodChoice === "1") {
+      const course = courses.find((c) => c.id === formData.course);
+      const courseName = course ? course.name : "";
+      const intakeName = course && course.intake ? course.intake.name : "";
+      url += `&course_name=${encodeURIComponent(
+        courseName
+      )}&difficulty=${encodeURIComponent(formData.difficulty)}`;
+      if (intakeName) {
+        url += `&intake_name=${encodeURIComponent(intakeName)}`;
+      }
+    } else {
+      url += `&brief_description=${encodeURIComponent(
+        recommendationDialog.briefDescription
+      )}`;
+    }
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -553,7 +560,8 @@ if (recommendationDialog.methodChoice === "1") {
       setSubmitDialog({
         open: true,
         success: false,
-        message: "Please wait while student data loads or select a valid course with students",
+        message:
+          "Please wait while student data loads or select a valid course with students",
       });
       return;
     }
@@ -629,6 +637,7 @@ if (recommendationDialog.methodChoice === "1") {
                   label="Due Date"
                   value={formData.due_date}
                   onChange={handleDateChange("due_date")}
+                  sx={{ width: "100%" }}
                   renderInput={(params) => (
                     <StyledTextField
                       {...params}
@@ -640,7 +649,9 @@ if (recommendationDialog.methodChoice === "1") {
                         ...params.InputProps,
                         startAdornment: (
                           <CalendarIcon
-                            color={validationErrors.due_date ? "error" : "action"}
+                            color={
+                              validationErrors.due_date ? "error" : "action"
+                            }
                             sx={{ mr: 1, opacity: 0.6 }}
                           />
                         ),
@@ -659,6 +670,7 @@ if (recommendationDialog.methodChoice === "1") {
                   value={formData.end_date}
                   onChange={handleDateChange("end_date")}
                   minDateTime={formData.due_date}
+                  sx={{ width: "100%" }}
                   renderInput={(params) => (
                     <StyledTextField
                       {...params}
@@ -670,7 +682,9 @@ if (recommendationDialog.methodChoice === "1") {
                         ...params.InputProps,
                         startAdornment: (
                           <CalendarIcon
-                            color={validationErrors.end_date ? "error" : "action"}
+                            color={
+                              validationErrors.end_date ? "error" : "action"
+                            }
                             sx={{ mr: 1, opacity: 0.6 }}
                           />
                         ),
@@ -705,7 +719,7 @@ if (recommendationDialog.methodChoice === "1") {
                     disablePortal: true,
                     sx: {
                       '&[aria-hidden="true"]': {
-                        display: isTrackMenuOpen ? 'block' : 'none',
+                        display: isTrackMenuOpen ? "block" : "none",
                       },
                     },
                   }}
@@ -728,8 +742,13 @@ if (recommendationDialog.methodChoice === "1") {
                             <SchoolIcon sx={{ fontSize: 14 }} />
                           </Avatar>
                           <Box>
-                            <Typography variant="body2">{track.name}</Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="body2">
+                              {track.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               {track.description}
                             </Typography>
                           </Box>
@@ -779,13 +798,18 @@ if (recommendationDialog.methodChoice === "1") {
                             <DescriptionIcon sx={{ fontSize: 14 }} />
                           </Avatar>
                           <Typography variant="body2">
-                            {course.name} {course.intake ? `Intake(${course.intake.name})` : '(No Intake)'}
+                            {course.name}{" "}
+                            {course.intake
+                              ? `Intake(${course.intake.name})`
+                              : "(No Intake)"}
                           </Typography>
                         </Stack>
                       </MenuItem>
                     ))
                   ) : (
-                    <MenuItem disabled>No courses assigned to this track</MenuItem>
+                    <MenuItem disabled>
+                      No courses assigned to this track
+                    </MenuItem>
                   )}
                 </StyledSelect>
                 {validationErrors.course && (
@@ -796,7 +820,11 @@ if (recommendationDialog.methodChoice === "1") {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required error={validationErrors.difficulty}>
+              <FormControl
+                fullWidth
+                required
+                error={validationErrors.difficulty}
+              >
                 <InputLabel sx={{ fontWeight: 500 }}>Difficulty</InputLabel>
                 <StyledSelect
                   value={formData.difficulty}
@@ -817,7 +845,9 @@ if (recommendationDialog.methodChoice === "1") {
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
-                <InputLabel sx={{ fontWeight: 500 }}>Assignment Type</InputLabel>
+                <InputLabel sx={{ fontWeight: 500 }}>
+                  Assignment Type
+                </InputLabel>
                 <StyledSelect
                   value={formData.assignment_type}
                   onChange={handleChange}
@@ -927,7 +957,10 @@ if (recommendationDialog.methodChoice === "1") {
                   <Box display="flex" alignItems="center">
                     <Typography
                       variant="body2"
-                      sx={{ fontWeight: 500, color: theme.palette.text.primary }}
+                      sx={{
+                        fontWeight: 500,
+                        color: theme.palette.text.primary,
+                      }}
                     >
                       Assign to all course students
                     </Typography>
@@ -963,7 +996,9 @@ if (recommendationDialog.methodChoice === "1") {
                               : "default"
                           }
                           avatar={
-                            <Avatar sx={{ bgcolor: theme.palette.primary.light }}>
+                            <Avatar
+                              sx={{ bgcolor: theme.palette.primary.light }}
+                            >
                               <PersonIcon sx={{ fontSize: 16 }} />
                             </Avatar>
                           }
@@ -1109,10 +1144,16 @@ if (recommendationDialog.methodChoice === "1") {
                       </Typography>
                       <Typography variant="body2">
                         {courses.find((c) => c.id === formData.course)
-                          ? `${courses.find((c) => c.id === formData.course).name} Intake(${courses.find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
+                          ? `${
+                              courses.find((c) => c.id === formData.course).name
+                            } Intake(${
+                              courses.find((c) => c.id === formData.course)
+                                .intake?.name || "No Intake"
+                            })`
                           : "Not selected"}
                         <br />
-                        {tracks.find((t) => t.id === formData.track)?.name || "Not selected"}
+                        {tracks.find((t) => t.id === formData.track)?.name ||
+                          "Not selected"}
                       </Typography>
                     </Box>
                     <Box>
@@ -1206,7 +1247,8 @@ if (recommendationDialog.methodChoice === "1") {
               bgcolor: theme.palette.warning.light,
             }}
           >
-            No courses assigned for the selected track. Please contact an admin to get assigned to a course.
+            No courses assigned for the selected track. Please contact an admin
+            to get assigned to a course.
           </Alert>
         )}
 
@@ -1253,7 +1295,14 @@ if (recommendationDialog.methodChoice === "1") {
           >
             {getStepContent(activeStep)}
 
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4, gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                mt: 4,
+                gap: 2,
+              }}
+            >
               <Button
                 disabled={activeStep === 0}
                 onClick={handleBack}
@@ -1323,12 +1372,18 @@ if (recommendationDialog.methodChoice === "1") {
                 fontSize: "1.25rem",
               }}
             >
-              {submitDialog.success ? "Assignment Created" : "Submission Failed"}
+              {submitDialog.success
+                ? "Assignment Created"
+                : "Submission Failed"}
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ textAlign: "center" }}>
             <Typography
-              sx={{ mb: 2, fontSize: "0.875rem", color: theme.palette.text.secondary }}
+              sx={{
+                mb: 2,
+                fontSize: "0.875rem",
+                color: theme.palette.text.secondary,
+              }}
             >
               {submitDialog.message}
             </Typography>

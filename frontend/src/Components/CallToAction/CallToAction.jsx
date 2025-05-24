@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import heroBg from "/src/assets/img/newCapital.png";
+import heroBg from "/src/assets/img/newCapital2.png";
 
 const callToActionData = {
   title: "Let's Get Things Done",

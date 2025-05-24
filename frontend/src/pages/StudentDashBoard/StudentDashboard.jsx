@@ -96,7 +96,10 @@ const StudentDashboard = () => {
     const fetchData = async () => {
       try {
         setData((prev) => ({ ...prev, loading: true, error: null }));
-        console.log("StudentDashboard fetching data with token:", token ? "Present" : "Missing");
+        console.log(
+          "StudentDashboard fetching data with token:",
+          token ? "Present" : "Missing"
+        );
         const response = await fetchStudentData();
         console.log("Fetched Data:", JSON.stringify(response, null, 2));
         setData({
@@ -110,7 +113,10 @@ const StudentDashboard = () => {
         });
         setSubmittedAssignments((prev) => {
           const updatedSubmissions = { ...response.submissions };
-          localStorage.setItem("submittedAssignments", JSON.stringify(updatedSubmissions));
+          localStorage.setItem(
+            "submittedAssignments",
+            JSON.stringify(updatedSubmissions)
+          );
           return updatedSubmissions;
         });
       } catch (error) {
@@ -136,7 +142,7 @@ const StudentDashboard = () => {
     if (data.loading) {
       return (
         <Box display="flex" justifyContent="center" p={4}>
-          <CircularProgress sx={{ color: "#e53935" }} />
+          <CircularProgress sx={{ color: "#1976d2" }} />
         </Box>
       );
     }
