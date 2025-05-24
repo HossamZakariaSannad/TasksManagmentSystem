@@ -189,17 +189,21 @@ const Submissions = () => {
                 const altRes = await apiClient.get(
                   `submission/instructor/?student=${student.student_id}&assignment=${assignmentId}`
                 );
-                if (altRes.data?.results?.[0]) {
-                  submission = altRes.data.results[0];
+                // console.log("altRes",altRes);
+                
+                if (altRes.data) {
+                  // console.log("altRes inside",altRes);
+
+                  submission = altRes.data[0];
                   submissionId = submission.id;
                   fileUrl = submission.file_url;
-                  submissionDate = submission.submission_time;
+                  submissionDate = submission.submission_date;
                 }
               } catch (altError) {
                 console.log('Alternative submission fetch failed');
               }
             }
-
+            
             // Check if the student is marked as submitted in the original response
             const isSubmitted = response.data.submitters.some(
               s => s.student_id === student.student_id
@@ -440,6 +444,8 @@ const Submissions = () => {
         ? student.submitted
         : !student.submitted
   );
+console.log("filterd",filteredStudents);
+console.log("not filterd",submissionData);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -553,6 +559,7 @@ const Submissions = () => {
               onChange={handleAccordionChange(student.student_id)}
               sx={{ mb: 2, boxShadow: 3 }}
             >
+          
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box sx={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -640,7 +647,7 @@ const Submissions = () => {
                           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                             Last updated:{" "}
                             {new Date(
-                              existingEvaluations[student.student_id].updated_at
+                              existingEvaluations[student.student_id].graded_date
                             ).toLocaleString()}
                           </Typography>
                         )}
