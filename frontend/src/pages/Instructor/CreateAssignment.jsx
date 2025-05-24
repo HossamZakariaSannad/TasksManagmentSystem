@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   fetchTracks,
-  fetchCourses as fetchAssignmentCourses,
+  fetchCourses,
   fetchStudents,
   createAssignment,
-  clearStudents,
 } from "../../redux/createassignmentsSlice";
-import { fetchCourses as fetchMyCourses } from "../../redux/coursesSlice";
 import {
   Box,
   Paper,
@@ -61,7 +59,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { isValidUrl } from "../../../utils/validation";
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://task-project-backend-1hx7.onrender.com';
 const steps = ["Basic Info", "Assignment Target", "Review"];
 
 const SimpleButton = styled(Button)(({ theme }) => ({
@@ -171,14 +168,18 @@ const CreateAssignment = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const dispatch = useDispatch();
-  const { user_id, role } = useSelector((state) => state.auth);
-  const { tracks, courses: assignmentCourses, students, loading, error } = useSelector(
+  const { user_id } = useSelector((state) => state.auth);
+  const { tracks, courses, students, loading, error } = useSelector(
     (state) => state.createassignments
   );
-  const {
-    userCourses: { track_courses, courses: myCourses },
-    status: { fetchCoursesLoading, fetchCoursesError },
-  } = useSelector((state) => state.courses);
+
+  useEffect(() => {
+    console.log("Tracks:", tracks);
+    console.log("Courses:", courses);
+    console.log("Students:", students);
+    console.log("Loading:", loading);
+    console.log("Error:", error);
+  }, [tracks, courses, students, loading, error]);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({
@@ -221,58 +222,6 @@ const CreateAssignment = () => {
   });
   const [isTrackMenuOpen, setIsTrackMenuOpen] = useState(false);
 
-  // Compute unique courses similar to MyCourses
-  const uniqueCourses = useMemo(() => {
-    const courseMap = new Map();
-    let sourceCourses = [];
-
-    if (role === 'supervisor') {
-      sourceCourses = (track_courses && track_courses.length > 0)
-        ? track_courses
-        : (myCourses || []);
-    } else if (role === 'instructor') {
-      const instructorTrackCourses = (track_courses || []).filter(
-        course => course.instructor?.id === user_id
-      );
-      sourceCourses = instructorTrackCourses.length > 0
-        ? instructorTrackCourses
-        : (myCourses || []).filter(course => course.instructor?.id === user_id);
-    }
-
-    sourceCourses.forEach(course => {
-      if (!courseMap.has(course.id)) {
-        courseMap.set(course.id, {
-          ...course,
-          tracks: Array.isArray(course.tracks) ? course.tracks : [],
-        });
-      } else {
-        const existing = courseMap.get(course.id);
-        const existingTrackIds = new Set(existing.tracks.map(t => t.id));
-        course.tracks?.forEach(track => {
-          if (!existingTrackIds.has(track.id)) {
-            existing.tracks.push(track);
-            existingTrackIds.add(track.id);
-          }
-        });
-      }
-    });
-
-    // Filter by selected track
-    if (formData.track) {
-      return Array.from(courseMap.values()).filter(course =>
-        course.tracks?.some(track => track.id === formData.track)
-      );
-    }
-    return Array.from(courseMap.values());
-  }, [track_courses, myCourses, role, user_id, formData.track]);
-
-  // Fetch tracks and courses
-  useEffect(() => {
-    dispatch(fetchTracks(user_id));
-    dispatch(fetchMyCourses(user_id)); // Use coursesSlice to fetch courses
-  }, [dispatch, user_id]);
-
-  // Validate track and reset if invalid
   useEffect(() => {
     if (formData.track && tracks.length > 0) {
       const isValidTrack = tracks.some((track) => track.id === formData.track);
@@ -287,10 +236,15 @@ const CreateAssignment = () => {
     }
   }, [tracks, formData.track]);
 
-  // Fetch students when course changes
+  const fetchCoursesMemoized = useCallback(() => {
+    if (formData.track) {
+      dispatch(fetchCourses({ userId: user_id, trackId: formData.track }));
+    }
+  }, [dispatch, user_id, formData.track]);
+
   const fetchStudentsMemoized = useCallback(() => {
     if (formData.course && formData.track) {
-      const selectedCourse = uniqueCourses.find((c) => c.id === formData.course);
+      const selectedCourse = courses.find((c) => c.id === formData.course);
       const intakeId = selectedCourse?.intake?.id;
       if (intakeId) {
         dispatch(
@@ -301,10 +255,18 @@ const CreateAssignment = () => {
           })
         );
       } else {
-        dispatch(clearStudents());
+        dispatch({ type: 'assignments/clearStudents' });
       }
     }
-  }, [dispatch, formData.track, formData.course, uniqueCourses]);
+  }, [dispatch, formData.track, formData.course, courses]);
+
+  useEffect(() => {
+    dispatch(fetchTracks(user_id));
+  }, [dispatch, user_id]);
+
+  useEffect(() => {
+    fetchCoursesMemoized();
+  }, [fetchCoursesMemoized]);
 
   useEffect(() => {
     fetchStudentsMemoized();
@@ -368,15 +330,18 @@ const CreateAssignment = () => {
       return;
     }
 
-    let url = `${API_URL}/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
+    let url = `http://127.0.0.1:8000/ai/recommendations/?method_choice=${recommendationDialog.methodChoice}`;
     if (recommendationDialog.methodChoice === "1") {
-      const course = uniqueCourses.find((c) => c.id === formData.course);
-      const courseName = course ? `${course.name} Intake(${course.intake?.name || 'No Intake'})` : "";
+      const course = courses.find((c) => c.id === formData.course);
+      const courseName = course ? course.name : "";
+      const intakeName = course && course.intake ? course.intake.name : "";
       url += `&course_name=${encodeURIComponent(courseName)}&difficulty=${encodeURIComponent(formData.difficulty)}`;
+      if (intakeName) {
+        url += `&intake_name=${encodeURIComponent(intakeName)}`;
+      }
     } else {
       url += `&brief_description=${encodeURIComponent(recommendationDialog.briefDescription)}`;
     }
-
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -725,7 +690,7 @@ const CreateAssignment = () => {
                   onChange={handleChange}
                   name="track"
                   label="Track"
-                  disabled={loading || fetchCoursesLoading}
+                  disabled={loading}
                   MenuProps={{
                     PaperProps: {
                       sx: {
@@ -733,11 +698,21 @@ const CreateAssignment = () => {
                         boxShadow: theme.shadows[3],
                       },
                     },
+                    TransitionProps: {
+                      onEntered: () => setIsTrackMenuOpen(true),
+                      onExited: () => setIsTrackMenuOpen(false),
+                    },
+                    disablePortal: true,
+                    sx: {
+                      '&[aria-hidden="true"]': {
+                        display: isTrackMenuOpen ? 'block' : 'none',
+                      },
+                    },
                   }}
                   onOpen={() => setIsTrackMenuOpen(true)}
                   onClose={() => setIsTrackMenuOpen(false)}
                 >
-                  {loading || fetchCoursesLoading ? (
+                  {loading ? (
                     <MenuItem disabled>Loading tracks...</MenuItem>
                   ) : tracks.length > 0 ? (
                     tracks.map((track) => (
@@ -776,7 +751,7 @@ const CreateAssignment = () => {
               <FormControl
                 fullWidth
                 required
-                disabled={!formData.track || loading || fetchCoursesLoading || uniqueCourses.length === 0}
+                disabled={!formData.track || loading || courses.length === 0}
                 error={validationErrors.course}
               >
                 <InputLabel sx={{ fontWeight: 500 }}>Course</InputLabel>
@@ -786,12 +761,12 @@ const CreateAssignment = () => {
                   name="course"
                   label="Course"
                 >
-                  {loading || fetchCoursesLoading ? (
+                  {loading ? (
                     <MenuItem disabled>Loading courses...</MenuItem>
                   ) : !formData.track ? (
                     <MenuItem disabled>Select a track first</MenuItem>
-                  ) : uniqueCourses.length > 0 ? (
-                    uniqueCourses.map((course) => (
+                  ) : courses.length > 0 ? (
+                    courses.map((course) => (
                       <MenuItem key={course.id} value={course.id}>
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <Avatar
@@ -1133,8 +1108,8 @@ const CreateAssignment = () => {
                         Course & Track
                       </Typography>
                       <Typography variant="body2">
-                        {uniqueCourses.find((c) => c.id === formData.course)
-                          ? `${uniqueCourses.find((c) => c.id === formData.course).name} Intake(${uniqueCourses.find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
+                        {courses.find((c) => c.id === formData.course)
+                          ? `${courses.find((c) => c.id === formData.course).name} Intake(${courses.find((c) => c.id === formData.course).intake?.name || 'No Intake'})`
                           : "Not selected"}
                         <br />
                         {tracks.find((t) => t.id === formData.track)?.name || "Not selected"}
@@ -1196,7 +1171,7 @@ const CreateAssignment = () => {
           Create New Assignment
         </Typography>
 
-        {(loading || fetchCoursesLoading) && (
+        {loading && (
           <Box
             sx={{
               display: "flex",
@@ -1208,7 +1183,7 @@ const CreateAssignment = () => {
             <CircularProgress size={32} />
           </Box>
         )}
-        {(error || fetchCoursesError) && (
+        {error && (
           <Alert
             severity="error"
             sx={{
@@ -1218,10 +1193,10 @@ const CreateAssignment = () => {
               bgcolor: theme.palette.error.light,
             }}
           >
-            {error || fetchCoursesError}
+            {error}
           </Alert>
         )}
-        {!(loading || fetchCoursesLoading) && uniqueCourses.length === 0 && formData.track && (
+        {!loading && courses.length === 0 && formData.track && (
           <Alert
             severity="warning"
             sx={{
