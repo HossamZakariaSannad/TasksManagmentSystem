@@ -27,7 +27,7 @@ const cardData = [
     number: "04",
     title: "Custom Workflows",
     description:
-      "Adapt Task Flow to your team’s needs with customizable statuses, labels, and workflows that match your process.",
+      "Adapt TaskPilot to your team’s needs with customizable statuses, labels, and workflows that match your process.",
   },
   {
     id: 5,

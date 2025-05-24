@@ -11,7 +11,7 @@ const Hero = () => {
           <div className="col-lg-8">
             <h2>Stay Organized</h2>
             <p>
-              Task Flow helps you manage tasks, track projects, and collaborate
+              TaskPilot helps you manage tasks, track projects, and collaborate
               with your team effortlessly and in real time.
             </p>
             <Link to="/signin" className="btn-get-started">

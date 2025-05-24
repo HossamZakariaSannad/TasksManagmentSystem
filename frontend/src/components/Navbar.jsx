@@ -12,8 +12,11 @@ import {
   ListItemIcon,
   ListItemText,
   IconButton,
-  Badge,
-  styled,
+  Drawer,
+  List,
+  ListItemButton,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Home,
@@ -30,10 +33,13 @@ import {
   ClipboardList,
   Briefcase,
   Info,
+  Menu as MenuIcon,
+  LogIn,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/authSlice";
+import { styled } from "@mui/material/styles";
 
 const NavButton = styled(Button)(({ theme }) => ({
   color: theme.palette.common.white,
@@ -47,276 +53,335 @@ const NavButton = styled(Button)(({ theme }) => ({
     backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   "&.active": {
-    backgroundColor: "#1976d2", // Blood red for active state
+    backgroundColor: "#1976d2",
     color: theme.palette.getContrastText("#1976d2"),
   },
 }));
 
 const Navbar = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { token, username, role } = useSelector((state) => state.auth);
   const [anchorEl, setAnchorEl] = React.useState(null);
+  const [mobileOpen, setMobileOpen] = React.useState(false);
   const open = Boolean(anchorEl);
 
-  const handleClick = (event) => {
+  const commonNavItems = [
+    { path: "/", label: "Home", icon: <Home size={18} /> },
+    { path: "/services", label: "Services", icon: <Briefcase size={18} /> },
+    { path: "/about", label: "AboutUs", icon: <Info size={18} /> },
+  ];
+
+  const roleSpecificNavItems = () => {
+    switch (role) {
+      case "instructor":
+        return [
+          {
+            path: "/instructor/dashboard",
+            label: "My Dashboard",
+            icon: <ClipboardList size={18} />,
+          },
+        ];
+      case "supervisor":
+        return [
+          {
+            path: "/supervisor/dashboard",
+            label: "Supervisor Dashboard",
+            icon: <BarChart2 size={18} />,
+          },
+        ];
+      case "student":
+        return [
+          {
+            path: "/student/dashboard?section=courses",
+            label: "My Courses",
+            icon: <BookOpen size={18} />,
+          },
+          {
+            path: "/student/dashboard?section=assignments",
+            label: "Assignments",
+            icon: <FileText size={18} />,
+          },
+        ];
+      case "branch_manager":
+        return [
+          {
+            path: "/branchmanager/dashboard",
+            label: "Branch Dashboard",
+            icon: <Grid size={18} />,
+          },
+        ];
+      case "admin":
+        return [
+          {
+            path: "/admin/dashboard",
+            label: "Dashboard",
+            icon: <BarChart2 size={18} />,
+          },
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const allNavItems = [
+    ...commonNavItems,
+    ...(token ? roleSpecificNavItems() : []),
+  ];
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleProfileMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
   const handleLogout = () => {
     dispatch(logout());
-    handleClose();
+    handleMenuClose();
     navigate("/signin");
   };
 
-  // Role-specific navigation items
-  const renderRoleSpecificLinks = () => {
-    switch (role) {
-      case "instructor":
-        return (
-          <>
-            <NavButton
-              component={Link}
-              to="/instructor/dashboard"
-              startIcon={<ClipboardList size={18} />}
-            >
-              My Dashboard
-            </NavButton>
-          </>
-        );
-      case "supervisor":
-        return (
-          <>
-            <NavButton
-              component={Link}
-              to="/supervisor/dashboard"
-              startIcon={<BarChart2 size={18} />}
-            >
-              Supervisor Dashboard
-            </NavButton>
-          </>
-        );
-      case "student":
-        return (
-          <>
-            <NavButton
-              component={Link}
-              to="/student/dashboard?section=courses" // Add query parameter
-              startIcon={<BookOpen size={18} />}
-            >
-              My Courses
-            </NavButton>
-            <NavButton
-              component={Link}
-              to="/student/dashboard?section=assignments"
-              startIcon={<FileText size={18} />}
-            >
-              Assignments
-            </NavButton>
-          </>
-        );
-      case "branch_manager":
-        return (
-          <>
-            <NavButton
-              component={Link}
-              to="/branchmanager/dashboard"
-              startIcon={<Grid size={18} />}
-            >
-              Branch Dashboard
-            </NavButton>
-          </>
-        );
-      case "admin":
-        return (
-          <>
-            <NavButton
-              component={Link}
-              to="/admin/dashboard"
-              startIcon={<BarChart2 size={18} />}
-            >
-              Dashboard
-            </NavButton>
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <AppBar
-      position="sticky"
+  const drawerContent = (
+    <Box
       sx={{
-        bgcolor: "rgba(18, 18, 18, 0.95)",
+        width: 250,
+        height: "100%",
+        pt: 2,
         background:
           "linear-gradient(135deg, rgba(18, 18, 18, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%)",
-        boxShadow: "none",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
-        top: 0,
-        zIndex: 1200,
-        "@supports (backdrop-filter: blur(8px))": {
-          backdropFilter: "blur(8px)",
-          bgcolor: "rgba(18, 18, 18, 0.8)",
-        },
       }}
     >
-      <Toolbar sx={{ justifyContent: "space-between" }}>
-        {/* Left side - Logo and Navigation buttons */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <List>
+        <Box sx={{ px: 2, mb: 2 }}>
+          <Typography variant="subtitle2" color="white">
+            Main Menu
+          </Typography>
+        </Box>
+        {commonNavItems.map((item) => (
+          <ListItemButton
+            key={item.path}
+            component={Link}
+            to={item.path}
+            onClick={handleDrawerToggle}
+            sx={{
+              color: "white",
+              "&.active": {
+                backgroundColor: "#1976d2",
+                color: "white",
+              },
+            }}
+          >
+            <ListItemIcon sx={{ color: "inherit" }}>{item.icon}</ListItemIcon>
+            <ListItemText primary={item.label} />
+          </ListItemButton>
+        ))}
+
+        {token && (
+          <>
+            <Box sx={{ px: 2, mt: 2, mb: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                My Account
+              </Typography>
+            </Box>
+            {roleSpecificNavItems().map((item) => (
+              <ListItemButton
+                key={item.path}
+                component={Link}
+                to={item.path}
+                onClick={handleDrawerToggle}
+                sx={{
+                  color: "white",
+                  "&.active": {
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: "inherit" }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
+          </>
+        )}
+      </List>
+    </Box>
+  );
+
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      <AppBar
+        position="static"
+        sx={{
+          bgcolor: "rgba(18, 18, 18, 0.95)",
+          background:
+            "linear-gradient(135deg, rgba(18, 18, 18, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%)",
+          boxShadow: "none",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { xs: "flex", md: "none" } }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Typography
-            variant="h6"
+            variant="h5"
             component={Link}
             to="/"
             sx={{
-              mr: 2,
+              flexGrow: 1,
               fontWeight: 700,
               color: "#1976d2",
               textDecoration: "none",
+              display: { xs: "none", md: "contents" },
               "&:hover": {
                 color: "#155da4",
               },
             }}
           >
-            TaskFlow
+            TaskPilot
           </Typography>
 
-          <NavButton component={Link} to="/" startIcon={<Home size={18} />}>
-            Home
-          </NavButton>
-          <NavButton
-            component={Link}
-            to="/services"
-            startIcon={<Briefcase size={18} />}
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              marginLeft: "1rem",
+              gap: 1,
+            }}
           >
-            Services
-          </NavButton>
-          <NavButton
-            component={Link}
-            to="/about"
-            startIcon={<Info size={18} />}
-          >
-            AboutUs
-          </NavButton>
-
-          {token && renderRoleSpecificLinks()}
-        </Box>
-
-        {/* Right side - Icons and user dropdown */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          {token && (
-            <>
-              {/* User profile dropdown */}
-              <IconButton
-                onClick={handleClick}
-                size="small"
-                sx={{ ml: 1 }}
-                aria-controls={open ? "account-menu" : undefined}
-                aria-haspopup="true"
-                aria-expanded={open ? "true" : undefined}
+            {allNavItems.map((item) => (
+              <NavButton
+                key={item.path}
+                component={Link}
+                to={item.path}
+                startIcon={item.icon}
               >
-                <Avatar
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    bgcolor: "#1976d2", // Blood red
-                    color: "white",
-                  }}
-                >
-                  {username?.charAt(0)?.toUpperCase()}
-                </Avatar>
-              </IconButton>
+                {item.label}
+              </NavButton>
+            ))}
+          </Box>
 
-              <Menu
-                anchorEl={anchorEl}
-                id="account-menu"
-                open={open}
-                onClose={handleClose}
-                onClick={handleClose}
-                PaperProps={{
-                  elevation: 0,
-                  sx: {
-                    overflow: "visible",
-                    filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                    mt: 1.5,
-                    bgcolor: "#2d2d2d",
-                    color: "white",
-                    "& .MuiAvatar-root": {
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              marginLeft: "auto", // Ensures right alignment
+            }}
+          >
+            {token ? (
+              <>
+                <IconButton onClick={handleProfileMenuOpen} size="small">
+                  <Avatar
+                    sx={{
                       width: 32,
                       height: 32,
-                      ml: -0.5,
-                      mr: 1,
-                    },
-                    "& .MuiListItemIcon-root": {
-                      color: "inherit",
-                    },
-                    "&:before": {
-                      content: '""',
-                      display: "block",
-                      position: "absolute",
-                      top: 0,
-                      right: 14,
-                      width: 10,
-                      height: 10,
+                      bgcolor: "#1976d2",
+                      color: "white",
+                    }}
+                  >
+                    {username?.charAt(0)?.toUpperCase()}
+                  </Avatar>
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={open}
+                  onClose={handleMenuClose}
+                  PaperProps={{
+                    elevation: 0,
+                    sx: {
+                      overflow: "visible",
+                      filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
+                      mt: 1.5,
                       bgcolor: "#2d2d2d",
-                      transform: "translateY(-50%) rotate(45deg)",
-                      zIndex: 0,
-                    },
-                  },
-                }}
-                transformOrigin={{ horizontal: "right", vertical: "top" }}
-                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
-              >
-                <MenuItem
-                  onClick={() => navigate("/profile")}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: "rgba(25, 118, 210, 0.1)",
-                    },
-                  }}
-                >
-                  <ListItemIcon>
-                    <User size={20} />
-                  </ListItemIcon>
-                  <ListItemText>Profile</ListItemText>
-                </MenuItem>
-                <Divider sx={{ bgcolor: "rgba(255, 255, 255, 0.12)" }} />
-                <MenuItem
-                  onClick={handleLogout}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: "rgba(25, 118, 210, 0.1)",
+                      color: "white",
+                      "& .MuiAvatar-root": {
+                        width: 32,
+                        height: 32,
+                        ml: -0.5,
+                        mr: 1,
+                      },
+                      "&:before": {
+                        content: '""',
+                        display: "block",
+                        position: "absolute",
+                        top: 0,
+                        right: 14,
+                        width: 10,
+                        height: 10,
+                        bgcolor: "#2d2d2d",
+                        transform: "translateY(-50%) rotate(45deg)",
+                        zIndex: 0,
+                      },
                     },
                   }}
                 >
-                  <ListItemIcon>
-                    <LogOut size={20} />
-                  </ListItemIcon>
-                  <ListItemText>Logout</ListItemText>
-                </MenuItem>
-              </Menu>
-            </>
-          )}
-
-          {!token && (
-            <>
+                  <MenuItem onClick={() => navigate("/profile")}>
+                    <ListItemIcon>
+                      <User size={20} />
+                    </ListItemIcon>
+                    <ListItemText>Profile</ListItemText>
+                  </MenuItem>
+                  <Divider sx={{ bgcolor: "rgba(255, 255, 255, 0.12)" }} />
+                  <MenuItem onClick={handleLogout}>
+                    <ListItemIcon>
+                      <LogOut size={20} />
+                    </ListItemIcon>
+                    <ListItemText>Logout</ListItemText>
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
               <Button
                 component={Link}
                 to="/signin"
                 variant="text"
                 sx={{ color: "white" }}
+                startIcon={<LogIn size={18} />}
               >
                 Sign In
               </Button>
-            </>
-          )}
-        </Box>
-      </Toolbar>
-    </AppBar>
+            )}
+          </Box>
+        </Toolbar>
+      </AppBar>
+
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            width: 240,
+            background:
+              "linear-gradient(135deg, rgba(18, 18, 18, 0.95) 0%, rgba(30, 30, 30, 0.95) 100%)",
+            borderRight: "1px solid rgba(255, 255, 255, 0.12)",
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+    </Box>
   );
 };
 

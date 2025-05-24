@@ -5,12 +5,12 @@ const termsData = [
   {
     title: "Introduction",
     content:
-      "Welcome to Task Flow. By accessing or using our services, you agree to these Terms.",
+      "Welcome to TaskPilot. By accessing or using our services, you agree to these Terms.",
   },
   {
     title: "User Responsibilities",
     content:
-      "As a user of Task Flow, you agree to follow all the rules and guidelines set forth.",
+      "As a user of TaskPilot, you agree to follow all the rules and guidelines set forth.",
   },
   {
     title: "Content Ownership",

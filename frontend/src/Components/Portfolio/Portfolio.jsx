@@ -87,7 +87,7 @@ const Portfolio = () => {
         <span>Features</span>
         <h2>Platform Highlights</h2>
         <p>
-          Explore how Task Flow can streamline your work, boost team
+          Explore how TaskPilot can streamline your work, boost team
           collaboration, and keep every project on track.
         </p>
       </div>

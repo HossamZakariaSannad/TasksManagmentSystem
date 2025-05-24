@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const footerInfo = {
-  logo: "TaskFlow",
+  logo: "TaskPilot",
   address: "Egypt - Cairo, New Capital",
   address2: "Knowledge City - ITI",
   phone: "+20 17002",
