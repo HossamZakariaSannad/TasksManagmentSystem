@@ -22,7 +22,7 @@ import {
 import MyCourses from "../../Components/MyCourses/MyCourses";
 import Assignments from "../../Components/Assignments/Assignments";
 import Submissions from "../../Components/Submissions/Submissions";
-import Grades from "./Grades";
+import Grades from "../../Components/Grades/Grades";
 import CreateAssignment from "../../Components/CreateAssignments/CreateAssignments";
 import OpeningPage from "./OpeningPage";
 import ChatRoomView from '../../Components/Chat/ChatRoomView';
