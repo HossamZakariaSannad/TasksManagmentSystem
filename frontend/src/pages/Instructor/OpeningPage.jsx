@@ -33,7 +33,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { useSelector } from "react-redux";
 import apiClient from "../../services/api";
-import { Dashboard } from "@mui/icons-material";
 
 const AnimatedCard = styled(Card)(({ theme }) => ({
   transition: "all 0.3s ease",
@@ -70,6 +69,7 @@ const OpeningPage = () => {
         const studentsMap = new Map(
           studentsData.map((student) => [student.id, student])
         );
+        console.log("Fetched students:", studentsData);
 
         // Fetch instructor's tracks and courses
         const tracksCoursesRes = await apiClient.get(
@@ -77,28 +77,155 @@ const OpeningPage = () => {
         );
         const tracks = tracksCoursesRes.data?.tracks || [];
         const courses = tracksCoursesRes.data?.courses || [];
+        console.log("Fetched tracks and courses:", { tracks, courses });
 
-          console.log(tracksCoursesRes);
-          
-        // Parallel fetch: courses, submissions, assignments
-        const [submissionsRes, assignmentsRes] = await Promise.all([
-          apiClient.get("/submission/submissions/"),
-          apiClient.get("/assignments/"),
-        ]);
+        // Fetch all assignments by looping over tracks and courses
+        const allAssignments = [];
+        await Promise.all(
+          tracks.map(async (track) => {
+            const trackCourses = courses.filter((course) =>
+              course.tracks?.some((t) => t.id === track.id)
+            );
+            await Promise.all(
+              trackCourses.map(async (course) => {
+                try {
+                  const response = await apiClient.get(
+                    `assignments/track/${track.id}/course/${course.id}/assignments/`
+                  );
+                  const assignments = response.data.assignments || [];
+                  allAssignments.push(
+                    ...assignments.map((assignment) => ({
+                      ...assignment,
+                      trackId: track.id, // Store track ID
+                      trackName: track.name,
+                      courseId: course.id, // Store course ID
+                      courseName: course.name,
+                    }))
+                  );
+                } catch (err) {
+                  console.error(
+                    `Failed to fetch assignments for track ${track.id} and course ${course.id}:`,
+                    err
+                  );
+                }
+              })
+            );
+          })
+        );
+        console.log("All assignments:", allAssignments);
 
-        const assignments = assignmentsRes.data || [];
+        // Fetch all submissions for the instructor across all assignments
+        const allSubmissions = [];
+        await Promise.all(
+          allAssignments.map(async (assignment) => {
+            try {
+              console.log(`Fetching submitters for assignment ${assignment.id} with track ${assignment.trackId} and course ${assignment.courseId}`);
+              const response = await apiClient.get(
+                `assignments/${assignment.id}/track/${assignment.trackId}/course/${assignment.courseId}/submitters/`
+              );
+              console.log(`Submitters response for assignment ${assignment.id}:`, response.data);
+              const submitters = (response.data.submitters || []).map((student) => ({
+                ...student,
+                assignment_id: assignment.id,
+                assignment_title: assignment.title,
+              }));
+              const nonSubmitters = (response.data.non_submitters || []).map((student) => ({
+                ...student,
+                assignment_id: assignment.id,
+                assignment_title: assignment.title,
+                submitted: false,
+              }));
+
+              // Fetch submission details for each submitter
+              const processedStudents = await Promise.all(
+                [...submitters, ...nonSubmitters].map(async (student) => {
+                  try {
+                    let submission = {};
+                    let submissionId = null;
+                    let fileUrl = null;
+                    let submissionDate = null;
+
+                    // Try to get submission data
+                    try {
+                      const submissionRes = await apiClient.get(
+                        `submission/assignments/${student.assignment_id}/students/${student.student_id}/`
+                      );
+                      console.log(`Submission response for student ${student.student_id}:`, submissionRes.data);
+                      if (submissionRes.data?.submission) {
+                        submission = submissionRes.data.submission;
+                        submissionId = submission.id;
+                        fileUrl = submission.file_url;
+                        submissionDate = submission.submission_time;
+                      }
+                    } catch (submissionError) {
+                      console.log('Primary submission fetch failed for student:', student.student_id, submissionError.message);
+                    }
+
+                    if (!fileUrl) {
+                      try {
+                        const altRes = await apiClient.get(
+                          `submission/instructor/?student=${student.student_id}&assignment=${student.assignment_id}`
+                        );
+                        console.log(`Alternative submission response for student ${student.student_id}:`, altRes.data);
+                        if (altRes.data?.results?.[0]) {
+                          submission = altRes.data.results[0];
+                          submissionId = submission.id;
+                          fileUrl = submission.file_url;
+                          submissionDate = submission.submission_time;
+                        }
+                      } catch (altError) {
+                        console.log('Alternative submission fetch failed for student:', student.student_id, altError.message);
+                      }
+                    }
+
+                    const isSubmitted = submitters.some(
+                      (s) => s.student_id === student.student_id
+                    );
+                    console.log(`Student ${student.student_id}: isSubmitted=${isSubmitted}, fileUrl=${fileUrl}`);
+
+                    return {
+                      ...student,
+                      submitted: isSubmitted || !!fileUrl,
+                      submission_id: submissionId,
+                      submission_date: submissionDate,
+                      file_url: fileUrl,
+                    };
+                  } catch (err) {
+                    console.error('Error processing student:', student.student_id, err);
+                    return {
+                      ...student,
+                      submitted: false,
+                      submission_id: null,
+                      file_url: null,
+                      submission_date: null,
+                    };
+                  }
+                })
+              );
+
+              // Add only submitted students to allSubmissions
+              const submittedStudents = processedStudents.filter((s) => s.submitted);
+              console.log(`Submitted students for assignment ${assignment.id}:`, submittedStudents);
+              allSubmissions.push(...submittedStudents);
+            } catch (err) {
+              console.error('Error fetching submissions for assignment:', assignment.id, err);
+            }
+          })
+        );
+
+        // Sort submissions by date (most recent first)
+        allSubmissions.sort((a, b) => new Date(b.submission_date) - new Date(a.submission_date));
+        console.log("All submissions:", allSubmissions);
 
         setDashboardData({
           tracks,
           courses,
-          assignments,
-          submissions: (submissionsRes.data || []).map((sub) => ({
+          assignments: allAssignments,
+          submissions: allSubmissions.map((sub) => ({
             ...sub,
             status: sub.feedback ? "Reviewed" : "Pending",
           })),
-          pendingFeedback: (submissionsRes.data || []).filter(
-            (s) => !s.feedback
-          ),
+          pendingFeedback: allSubmissions.filter((s) => !s.feedback),
           students: studentsMap,
         });
 
@@ -111,6 +238,7 @@ const OpeningPage = () => {
 
     if (user_id) fetchDashboardData();
   }, [user_id]);
+
 
   // Generate chart data
   const submissionsData = dashboardData.submissions.reduce(
@@ -126,6 +254,7 @@ const OpeningPage = () => {
     date,
     count,
   }));
+
   // Calculate active assignments based on end date
   const activeAssignments = dashboardData.assignments.filter((assignment) => {
     const now = new Date();
@@ -161,19 +290,19 @@ const OpeningPage = () => {
     },
   ];
 
+  // Prepare recent submissions (all submitted students)
   const recentActivity = dashboardData.submissions
-    .sort((a, b) => new Date(b.submission_date) - new Date(a.submission_date))
-    .slice(0, 3)
     .map((submission) => {
-      const student = dashboardData.students.get(submission.student);
+      const student = dashboardData.students.get(submission.student_id);
       return {
         ...submission,
         studentName: student
           ? `${student.first_name} ${student.last_name}`
-          : `Student ${submission.student}`,
-        assignmentTitle: "Assignment",
+          : `Student ${submission.student_id}`,
+        assignmentTitle: submission.assignment_title || "Assignment",
       };
-    });
+    })
+    .slice(0, 3); // Limit to 3 for display
 
   const StatsSkeleton = () => (
     <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -264,8 +393,7 @@ const OpeningPage = () => {
             Dashboard
           </Typography>
           <Typography variant="h6" color="textSecondary">
-            Managing {dashboardData.tracks.length} tracks •{" "}
-            {dashboardData.courses.length} courses
+            Managing {dashboardData.courses.length} courses
           </Typography>
         </Box>
       </Slide>
@@ -400,98 +528,104 @@ const OpeningPage = () => {
                   Recent Submissions
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {recentActivity.map((submission, index) => (
-                    <Slide
-                      key={submission.id}
-                      in
-                      direction="right"
-                      timeout={(index + 1) * 200}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          p: 2,
-                          borderRadius: 2,
-                          gap: 2,
-                          background: theme.palette.background.default,
-                          transition: theme.transitions.create(
-                            ["transform", "box-shadow"],
-                            {
-                              duration: theme.transitions.duration.shorter,
-                              easing: theme.transitions.easing.easeOut,
-                            }
-                          ),
-                          willChange: "transform",
-                          "&:hover": {
-                            transform: "scale(1.015)",
-                            boxShadow: theme.shadows[3],
-                          },
-                        }}
+                  {recentActivity.length > 0 ? (
+                    recentActivity.map((submission, index) => (
+                      <Slide
+                        key={submission.submission_id || index}
+                        in
+                        direction="right"
+                        timeout={(index + 1) * 200}
                       >
-                        <Avatar
+                        <Box
                           sx={{
-                            bgcolor: theme.palette.primary.main,
-                            width: 48,
-                            height: 48,
-                            fontSize: "1.2rem",
-                            position: "relative",
-                            "&::after": {
-                              content: '""',
-                              position: "absolute",
-                              bottom: 2,
-                              right: 2,
-                              width: 12,
-                              height: 12,
-                              bgcolor:
-                                Math.random() > 0.5
-                                  ? "success.main"
-                                  : "error.main",
-                              borderRadius: "50%",
-                              border: `2px solid ${theme.palette.background.paper}`,
+                            display: "flex",
+                            alignItems: "center",
+                            p: 2,
+                            borderRadius: 2,
+                            gap: 2,
+                            background: theme.palette.background.default,
+                            transition: theme.transitions.create(
+                              ["transform", "box-shadow"],
+                              {
+                                duration: theme.transitions.duration.shorter,
+                                easing: theme.transitions.easing.easeOut,
+                              }
+                            ),
+                            willChange: "transform",
+                            "&:hover": {
+                              transform: "scale(1.015)",
+                              boxShadow: theme.shadows[3],
                             },
                           }}
                         >
-                          {submission.studentName.charAt(0)}
-                        </Avatar>
-                        <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {submission.studentName}
-                          </Typography>
-                          <Typography variant="body2" color="textSecondary">
-                            {submission.assignmentTitle} • Submitted{" "}
-                            {formatDistanceToNow(
-                              new Date(submission.submission_date)
-                            )}{" "}
-                            ago
-                          </Typography>
-                          <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
-                            {submission.file_url && (
-                              <Button
-                                variant="contained"
-                                size="small"
-                                href={submission.file_url}
-                                target="_blank"
-                                rel="noopener"
-                                sx={{
-                                  borderRadius: 2,
-                                  textTransform: "none",
-                                  boxShadow: theme.shadows[2],
-                                  transition:
-                                    theme.transitions.create("box-shadow"),
-                                  "&:hover": {
-                                    boxShadow: theme.shadows[4],
-                                  },
-                                }}
-                              >
-                                View File
-                              </Button>
-                            )}
+                          <Avatar
+                            sx={{
+                              bgcolor: theme.palette.primary.main,
+                              width: 48,
+                              height: 48,
+                              fontSize: "1.2rem",
+                              position: "relative",
+                              "&::after": {
+                                content: '""',
+                                position: "absolute",
+                                bottom: 2,
+                                right: 2,
+                                width: 12,
+                                height: 12,
+                                bgcolor:
+                                  Math.random() > 0.5
+                                    ? "success.main"
+                                    : "error.main",
+                                borderRadius: "50%",
+                                border: `2px solid ${theme.palette.background.paper}`,
+                              },
+                            }}
+                          >
+                            {submission.studentName.charAt(0)}
+                          </Avatar>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              {submission.studentName}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {submission.assignmentTitle} • Submitted{" "}
+                              {formatDistanceToNow(
+                                new Date(submission.submission_date)
+                              )}{" "}
+                              ago
+                            </Typography>
+                            <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
+                              {submission.file_url && (
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  href={submission.file_url}
+                                  target="_blank"
+                                  rel="noopener"
+                                  sx={{
+                                    borderRadius: 2,
+                                    textTransform: "none",
+                                    boxShadow: theme.shadows[2],
+                                    transition:
+                                      theme.transitions.create("box-shadow"),
+                                    "&:hover": {
+                                      boxShadow: theme.shadows[4],
+                                    },
+                                  }}
+                                >
+                                  View File
+                                </Button>
+                              )}
+                            </Box>
                           </Box>
                         </Box>
-                      </Box>
-                    </Slide>
-                  ))}
+                      </Slide>
+                    ))
+                  ) : (
+                    <Typography color="textSecondary">
+                      No recent submissions found.
+                    </Typography>
+                  )}
                 </Box>
               </CardContent>
             </AnimatedCard>
@@ -528,9 +662,8 @@ const OpeningPage = () => {
                   Your Courses
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  {
-                    dashboardData.courses.map((course, index) => {
-                      const courseTrack = course.tracks?.length
+                  {dashboardData.courses.map((course, index) => {
+                    const courseTrack = course.tracks?.length
                       ? dashboardData.tracks.find((track) => track.id === course.tracks[0]?.id)
                       : null;
                     return (
@@ -602,6 +735,94 @@ const OpeningPage = () => {
                       </Grow>
                     );
                   })}
+                </Box>
+              </CardContent>
+            </AnimatedCard>
+          </Fade>
+        </Grid>
+
+        {/* All Assignments */}
+        <Grid item xs={12}>
+          <Fade in timeout={1200}>
+            <AnimatedCard
+              sx={{
+                background: theme.palette.background.paper,
+                transition: theme.transitions.create(
+                  ["transform", "box-shadow"],
+                  {
+                    duration: theme.transitions.duration.standard,
+                    easing: theme.transitions.easing.easeInOut,
+                  }
+                ),
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: theme.shadows[6],
+                },
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{ fontWeight: 700, mb: 3 }}
+                >
+                  All Assignments
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  {dashboardData.assignments.length > 0 ? (
+                    dashboardData.assignments.map((assignment, index) => (
+                      <Grow key={assignment.id} in timeout={(index + 1) * 200}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            p: 2,
+                            borderRadius: 2,
+                            gap: 2,
+                            background: theme.palette.background.default,
+                            transition: theme.transitions.create(
+                              ["transform", "box-shadow"],
+                              {
+                                duration: theme.transitions.duration.shorter,
+                                easing: theme.transitions.easing.easeOut,
+                              }
+                            ),
+                            willChange: "transform",
+                            "&:hover": {
+                              transform: "translateX(8px)",
+                              boxShadow: theme.shadows[3],
+                            },
+                          }}
+                        >
+                          <Avatar
+                            sx={{
+                              bgcolor: theme.palette.warning.main,
+                              width: 48,
+                              height: 48,
+                              fontSize: "1.2rem",
+                            }}
+                          >
+                            <FiFileText />
+                          </Avatar>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              {assignment.title}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              Track: {assignment.trackName} • Course: {assignment.courseName}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              Due: {new Date(assignment.end_date).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grow>
+                    ))
+                  ) : (
+                    <Typography color="textSecondary">
+                      No assignments found.
+                    </Typography>
+                  )}
                 </Box>
               </CardContent>
             </AnimatedCard>

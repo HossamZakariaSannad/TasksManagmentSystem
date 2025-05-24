@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -51,9 +52,12 @@ const Grades = () => {
     initial: true,
     assignments: false,
     submissions: false,
+    intakes: false,
   });
   const [error, setError] = useState(null);
-  const [data, setData] = useState({ tracks: [], courses: [] });
+  const [data, setData] = useState({ tracks: [], courses: [], trackCourses: [] });
+  const [intakes, setIntakes] = useState([]);
+  const [intakeCourses, setIntakeCourses] = useState({});
   const [selectedTrack, setSelectedTrack] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
   const [selectedAssignment, setSelectedAssignment] = useState("");
@@ -79,15 +83,63 @@ const Grades = () => {
         const response = await apiClient.get(
           `staff/track-and-courses/${instructorId}/`
         );
+
+        // Fetch intakes
+        setLoading((prev) => ({ ...prev, intakes: true }));
+        const intakeResponse = await apiClient.get('/student/intakes/');
+        const fetchedIntakes = Array.isArray(intakeResponse.data.intakes)
+          ? intakeResponse.data.intakes
+          : [];
+        setIntakes(fetchedIntakes);
+
+        // Fetch courses for each intake
+        const fetchedIntakeCourses = {};
+        await Promise.all(
+          fetchedIntakes.map(async (intake) => {
+            try {
+              const intakeCoursesResponse = await apiClient.get(
+                `/courses/intakes/${intake.id}/courses/`
+              );
+              fetchedIntakeCourses[intake.id] = Array.isArray(intakeCoursesResponse.data)
+                ? intakeCoursesResponse.data
+                : [];
+            } catch (error) {
+              console.warn(`Failed to fetch courses for intake ${intake.id}:`, error);
+              fetchedIntakeCourses[intake.id] = [];
+            }
+          })
+        );
+        setIntakeCourses(fetchedIntakeCourses);
+
+        // Enrich courses with intake data
+        const courses = (response.data.courses || response.data.taught_courses || []).map((course) => {
+          let intake = null;
+          for (const intakeId in fetchedIntakeCourses) {
+            const coursesInIntake = fetchedIntakeCourses[intakeId];
+            if (coursesInIntake.some((c) => c.id === course.id)) {
+              const matchingIntake = fetchedIntakes.find((i) => i.id === parseInt(intakeId));
+              if (matchingIntake) {
+                intake = { id: matchingIntake.id, name: matchingIntake.name };
+                break;
+              }
+            }
+          }
+          return {
+            ...course,
+            intake,
+          };
+        });
+
         setData({
-          tracks: response.data.tracks,
-          courses: response.data.courses,
+          tracks: response.data.tracks || [],
+          courses,
+          trackCourses: response.data.track_courses || [],
         });
         setError(null);
       } catch (err) {
-        setError("Failed to fetch tracks and courses");
+        setError("Failed to fetch tracks, courses, or intakes");
       } finally {
-        setLoading((prev) => ({ ...prev, initial: false }));
+        setLoading((prev) => ({ ...prev, initial: false, intakes: false }));
       }
     };
     fetchTracksAndCourses();
@@ -118,34 +170,54 @@ const Grades = () => {
         `assignments/${assignmentId}/track/${selectedTrack}/course/${selectedCourse}/submitters/`
       );
 
-      const dataWithGrades = await Promise.all(
-        response.data.submitters.map(async (student) => {
+      // Process all students (both submitters and non-submitters)
+      const allStudents = [
+        ...(response.data.submitters || []),
+        ...(response.data.non_submitters || []).map(s => ({ ...s, submitted: false }))
+      ];
+
+      const processedStudents = await Promise.all(
+        allStudents.map(async (student) => {
           try {
-            // Fetch submission
             let submission = {};
+            let submissionId = null;
+            let fileUrl = null;
+            let submissionDate = null;
+
+            // Try to get submission data
             try {
               const submissionRes = await apiClient.get(
                 `submission/assignments/${assignmentId}/students/${student.student_id}/`
               );
-              submission = submissionRes.data.submission || {};
-              // Fallback for submission ID
-              if (!submission.id && submission.file_url) {
+              if (submissionRes.data?.submission) {
+                submission = submissionRes.data.submission;
+                submissionId = submission.id;
+                fileUrl = submission.file_url;
+                submissionDate = submission.submission_time;
+              }
+            } catch (submissionError) {
+              console.log('Primary submission fetch failed, trying alternative endpoint');
+              try {
                 const altRes = await apiClient.get(
                   `submission/instructor/?student=${student.student_id}&assignment=${assignmentId}`
                 );
-                if (altRes.data.results?.length > 0) {
+                if (altRes.data?.results?.[0]) {
                   submission = altRes.data.results[0];
+                  submissionId = submission.id;
+                  fileUrl = submission.file_url;
+                  submissionDate = submission.submission_time;
                 }
+              } catch (altError) {
+                console.log('Alternative submission fetch failed');
               }
-            } catch (submissionError) {
-              console.error('Submission fetch error:', submissionError);
             }
 
-            // Validate submission
-            const hasValidSubmission = !!submission.file_url;
-            const submissionId = submission.id || submission.submission_id || null;
+            // Check if the student is marked as submitted in the original response
+            const isSubmitted = response.data.submitters.some(
+              s => s.student_id === student.student_id
+            );
 
-            // Fetch existing grade
+            // Get existing grade if any
             let existingEvaluation = null;
             try {
               const gradeRes = await apiClient.get(
@@ -158,34 +230,40 @@ const Grades = () => {
 
             return {
               ...student,
-              submitted: hasValidSubmission,
+              submitted: isSubmitted || !!fileUrl,
               submission_id: submissionId,
-              submission_date: submission.submission_time,
-              file_url: submission.file_url,
+              submission_date: submissionDate,
+              file_url: fileUrl,
               existingEvaluation,
             };
           } catch (err) {
+            console.error('Error processing student:', student.student_id, err);
             return {
               ...student,
               submitted: false,
               submission_id: null,
-              submission_date: null,
               file_url: null,
-              existingEvaluation: null,
+              submission_date: null,
+              existingEvaluation: null
             };
           }
         })
       );
 
+      // Separate back into submitters and non-submitters based on actual submission status
+      const submitters = processedStudents.filter(s => s.submitted);
+      const non_submitters = processedStudents.filter(s => !s.submitted);
+
+      // Prepare feedback and grades from existing evaluations
       const evaluations = {};
       const initialFeedback = {};
       const initialGrades = {};
 
-      dataWithGrades.forEach((student) => {
+      processedStudents.forEach((student) => {
         if (student.existingEvaluation) {
           evaluations[student.student_id] = student.existingEvaluation;
-          initialFeedback[student.student_id] = student.existingEvaluation.feedback;
-          initialGrades[student.student_id] = student.existingEvaluation.score.toString();
+          initialFeedback[student.student_id] = student.existingEvaluation.feedback || '';
+          initialGrades[student.student_id] = student.existingEvaluation.score?.toString() || '';
         }
       });
 
@@ -193,10 +271,13 @@ const Grades = () => {
       setFeedback(initialFeedback);
       setGrades(initialGrades);
       setSubmissionData({
-        ...response.data,
-        submitters: dataWithGrades,
+        submitters,
+        non_submitters,
+        submitted_count: submitters.length,
+        not_submitted_count: non_submitters.length
       });
     } catch (err) {
+      console.error('Error fetching submission status:', err);
       setError("Failed to fetch submission data");
     } finally {
       setLoading((prev) => ({ ...prev, submissions: false }));
@@ -466,12 +547,15 @@ const Grades = () => {
     }
   };
 
-  const filteredCourses = data.courses.filter((course) =>
-    course.tracks.some((track) => track.id === Number(selectedTrack))
+  const filteredCourses = data?.courses?.filter((course) =>
+    course.tracks.some((track) => track?.id === Number(selectedTrack))
   );
 
   const filteredStudents = submissionData
-    ? submissionData.submitters.filter((student) => student.existingEvaluation)
+    ? [
+      ...submissionData.submitters,
+      ...(submissionData.non_submitters || [])
+    ].filter(student => student.submitted)
     : [];
 
   const getBorderColor = (student) => {
@@ -494,9 +578,10 @@ const Grades = () => {
               value={selectedTrack}
               onChange={handleTrackChange}
               label="Select Track"
-              disabled={loading.initial}
+              disabled={loading.initial || loading.intakes}
             >
-              {data.tracks.map((track) => (
+              <MenuItem value=""><em>Select Track</em></MenuItem>
+              {data?.tracks.map((track) => (
                 <MenuItem key={track.id} value={track.id}>
                   {track.name}
                 </MenuItem>
@@ -512,13 +597,20 @@ const Grades = () => {
               value={selectedCourse}
               onChange={handleCourseChange}
               label="Select Course"
-              disabled={!selectedTrack || loading.assignments}
+              disabled={!selectedTrack || loading.assignments || loading.intakes}
             >
-              {filteredCourses.map((course) => (
-                <MenuItem key={course.id} value={course.id}>
-                  {course.name}
-                </MenuItem>
-              ))}
+              <MenuItem value=""><em>Select Course</em></MenuItem>
+              {loading.initial || loading.intakes ? (
+                <MenuItem disabled>Loading courses...</MenuItem>
+              ) : filteredCourses?.length === 0 ? (
+                <MenuItem disabled>No courses available</MenuItem>
+              ) : (
+                filteredCourses.map((course) => (
+                  <MenuItem key={course?.id} value={course?.id}>
+                    {course?.name} Intake({course.intake?.name || 'No Intake'})
+                  </MenuItem>
+                ))
+              )}
             </Select>
           </FormControl>
         </Grid>
@@ -532,6 +624,7 @@ const Grades = () => {
               label="Select Assignment"
               disabled={!selectedCourse || loading.assignments}
             >
+              <MenuItem value=""><em>Select Assignment</em></MenuItem>
               {assignments.map((assignment) => (
                 <MenuItem key={assignment.id} value={assignment.id}>
                   {assignment.title}
@@ -542,7 +635,7 @@ const Grades = () => {
         </Grid>
       </Grid>
 
-      {loading.initial && (
+      {(loading.initial || loading.intakes) && (
         <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
           <CircularProgress />
           <Typography sx={{ ml: 2 }}>Loading initial data...</Typography>
@@ -558,7 +651,9 @@ const Grades = () => {
       {submissionData && (
         <Box>
           <Typography variant="subtitle1" sx={{ mb: 2 }}>
-            Showing {filteredStudents.length} evaluated submissions
+            Showing {filteredStudents.length} students (
+            {submissionData.submitted_count} submitted,{" "}
+            {submissionData.not_submitted_count} not submitted)
           </Typography>
 
           <Grid container spacing={2}>
@@ -633,9 +728,9 @@ const Grades = () => {
                                     Submitted:{" "}
                                     {student.submission_date
                                       ? format(
-                                          new Date(student.submission_date),
-                                          "PPpp"
-                                        )
+                                        new Date(student.submission_date),
+                                        "PPpp"
+                                      )
                                       : "N/A"}
                                   </Typography>
                                 </Box>
@@ -897,11 +992,11 @@ const Grades = () => {
                                             <Typography variant="h6" sx={{ mt: 1 }}>
                                               {student.existingEvaluation.submission_time
                                                 ? format(
-                                                    new Date(
-                                                      student.existingEvaluation.submission_time
-                                                    ),
-                                                    "PPpp"
-                                                  )
+                                                  new Date(
+                                                    student.existingEvaluation.submission_time
+                                                  ),
+                                                  "PPpp"
+                                                )
                                                 : "N/A"}
                                             </Typography>
                                           </Card>
