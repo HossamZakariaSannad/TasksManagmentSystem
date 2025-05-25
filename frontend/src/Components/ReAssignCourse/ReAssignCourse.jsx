@@ -133,20 +133,20 @@ const ReAssignCourses = () => {
 
   // Debug course and intake data
   useEffect(() => {
-    console.log("Courses data:", courses);
-    console.log("Intakes data:", intakes);
-    console.log("IntakeCourses data:", intakeCourses);
-    console.log("Instructors data:", instructors);
-    courses?.forEach((course) => {
-      console.log(
-        `Course ${course.name} (ID: ${course.id}) - Intake:`,
-        course.intake,
-        "Tracks:",
-        course.tracks,
-        "Instructor:",
-        course.instructor
-      );
-    });
+    // console.log("Courses data:", courses);
+    // console.log("Intakes data:", intakes);
+    // console.log("IntakeCourses data:", intakeCourses);
+    // console.log("Instructors data:", instructors);
+    // courses?.forEach((course) => {
+    //   console.log(
+    //     `Course ${course.name} (ID: ${course.id}) - Intake:`,
+    //     course.intake,
+    //     "Tracks:",
+    //     course.tracks,
+    //     "Instructor:",
+    //     course.instructor
+    //   );
+    // });
     // Check if any course has intake data or is mapped
     const hasIntakeData = courses?.some(
       (course) =>
@@ -183,18 +183,18 @@ const ReAssignCourses = () => {
     if (editingCourse) {
       setSelectedInstructorId(editingCourse.instructor?.id || "");
       // Set instructor warning based on track instructors
-      const trackInstructors = getTrackInstructors(selectedTrackId);
-      console.log(
-        "Track instructors for trackId",
-        selectedTrackId,
-        ":",
-        trackInstructors
-      );
-      setInstructorWarning(
-        trackInstructors.length === 0
-          ? "No instructors assigned to courses in this track."
-          : ""
-      );
+      // const trackInstructors = getTrackInstructors(selectedTrackId);
+      // console.log(
+      //   "Track instructors for trackId",
+      //   selectedTrackId,
+      //   ":",
+      //   trackInstructors
+      // );
+      // setInstructorWarning(
+      //   trackInstructors.length === 0
+      //     ? "No instructors assigned to courses in this track."
+      //     : ""
+      // );
     }
   }, [editingCourse, selectedTrackId]);
 
@@ -234,14 +234,14 @@ const ReAssignCourses = () => {
   // Filter instructors by track
   const getTrackInstructors = (trackId) => {
     if (!trackId || !courses.length || !instructors.length) {
-      console.log(
-        "No trackId, courses, or instructors, returning empty array",
-        {
-          trackId,
-          coursesLength: courses.length,
-          instructorsLength: instructors.length,
-        }
-      );
+      // console.log(
+      //   "No trackId, courses, or instructors, returning empty array",
+      //   {
+      //     trackId,
+      //     coursesLength: courses.length,
+      //     instructorsLength: instructors.length,
+      //   }
+      // );
       return [];
     }
 
@@ -249,7 +249,7 @@ const ReAssignCourses = () => {
     const trackCourses = courses.filter((course) =>
       course.tracks?.some((track) => track.id === trackId)
     );
-    console.log(`Courses for trackId ${trackId}:`, trackCourses);
+    // console.log(`Courses for trackId ${trackId}:`, trackCourses);
 
     // Collect unique instructor IDs from track courses
     const instructorIds = [
@@ -257,10 +257,10 @@ const ReAssignCourses = () => {
         trackCourses
           .filter((course) => course.instructor?.id)
           .map((course) => {
-            console.log(
-              `Course ${course.name} (ID: ${course.id}) has instructor:`,
-              course.instructor
-            );
+            // console.log(
+            //   `Course ${course.name} (ID: ${course.id}) has instructor:`,
+            //   course.instructor
+            // );
             return course.instructor.id;
           })
       ),
@@ -336,11 +336,11 @@ const ReAssignCourses = () => {
     }
 
     try {
-      console.log("Dispatching reassignInstructor:", {
-        courseId: editingCourse.id,
-        instructorId: selectedInstructorId,
-        trackId: selectedTrackId,
-      });
+      // console.log("Dispatching reassignInstructor:", {
+      //   courseId: editingCourse.id,
+      //   instructorId: selectedInstructorId,
+      //   trackId: selectedTrackId,
+      // });
       await dispatch(
         reassignInstructor({
           courseId: editingCourse.id,
@@ -477,7 +477,7 @@ const ReAssignCourses = () => {
     });
 
     const result = Array.from(uniqueRows.values());
-    console.log("Filtered rows:", result);
+    // console.log("Filtered rows:", result);
     return result;
   }, [
     tracks,

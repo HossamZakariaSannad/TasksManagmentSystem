@@ -164,23 +164,23 @@ const AllCourseManagement = () => {
 
   // Debug course and intake data
   useEffect(() => {
-    console.log("Courses data:", courses);
-    console.log("Tracks data:", tracks);
-    console.log("Intakes data:", intakes);
-    console.log("IntakeCourses data:", intakeCourses);
-    console.log("AvailableIntakes data:", availableIntakes);
-    console.log("Instructors data:", instructors);
-    console.log("InstructorsTrackData:", instructorsTrackData);
-    courses?.forEach((course) => {
-      console.log(
-        `Course ${course.name} (ID: ${course.id}) - Intake:`,
-        course.intake,
-        "Tracks:",
-        course.tracks,
-        "Instructor:",
-        course.instructor
-      );
-    });
+    // console.log("Courses data:", courses);
+    // console.log("Tracks data:", tracks);
+    // console.log("Intakes data:", intakes);
+    // console.log("IntakeCourses data:", intakeCourses);
+    // console.log("AvailableIntakes data:", availableIntakes);
+    // console.log("Instructors data:", instructors);
+    // console.log("InstructorsTrackData:", instructorsTrackData);
+    // courses?.forEach((course) => {
+      // console.log(
+      //   `Course ${course.name} (ID: ${course.id}) - Intake:`,
+      //   course.intake,
+      //   "Tracks:",
+      //   course.tracks,
+      //   "Instructor:",
+      //   course.instructor
+      // );
+    // });
     const hasIntakeData = courses?.some(
       (course) =>
         course.intake ||
@@ -257,14 +257,14 @@ const AllCourseManagement = () => {
   // Filter instructors by track
   const getTrackInstructors = (trackId) => {
     if (!trackId || !courses.length || !instructors.length) {
-      console.log(
-        "No trackId, courses, or instructors, returning empty array",
-        {
-          trackId,
-          coursesLength: courses.length,
-          instructorsLength: instructors.length,
-        }
-      );
+      // console.log(
+      //   "No trackId, courses, or instructors, returning empty array",
+      //   {
+      //     trackId,
+      //     coursesLength: courses.length,
+      //     instructorsLength: instructors.length,
+      //   }
+      // );
       return [];
     }
 
@@ -272,7 +272,7 @@ const AllCourseManagement = () => {
     const trackCourses = courses.filter((course) =>
       course.tracks?.some((track) => track.id === trackId)
     );
-    console.log(`Courses for trackId ${trackId}:`, trackCourses);
+    // console.log(`Courses for trackId ${trackId}:`, trackCourses);
 
     // Collect unique instructor IDs from track courses
     const instructorIds = [
@@ -280,15 +280,15 @@ const AllCourseManagement = () => {
         trackCourses
           .filter((course) => course.instructor?.id)
           .map((course) => {
-            console.log(
-              `Course ${course.name} (ID: ${course.id}) has instructor:`,
-              course.instructor
-            );
+            // console.log(
+            //   `Course ${course.name} (ID: ${course.id}) has instructor:`,
+            //   course.instructor
+            // );
             return course.instructor.id;
           })
       ),
     ];
-    console.log(`Unique instructor IDs for trackId ${trackId}:`, instructorIds);
+    // console.log(`Unique instructor IDs for trackId ${trackId}:`, instructorIds);
 
     // Get instructor objects
     const trackInstructors = instructors.filter((instructor) =>
@@ -301,16 +301,16 @@ const AllCourseManagement = () => {
 
   // Handlers
   const openEditDialog = (course, trackId) => {
-    console.log(
-      "Opening edit dialog for course:",
-      course,
-      "with trackId:",
-      trackId
-    );
+    // console.log(
+    //   "Opening edit dialog for course:",
+    //   course,
+    //   "with trackId:",
+    //   trackId
+    // );
     const trackCourses = courses.filter((c) =>
       c.tracks?.some((t) => t.id === trackId)
     );
-    console.log(`Courses for trackId ${trackId}:`, trackCourses);
+    // console.log(`Courses for trackId ${trackId}:`, trackCourses);
     setEditData({
       courseId: course.id,
       name: course.name,
@@ -321,12 +321,12 @@ const AllCourseManagement = () => {
     });
     // Determine instructor warning
     const trackInstructors = getTrackInstructors(trackId);
-    console.log(
-      "Track instructors in openEditDialog for trackId",
-      trackId,
-      ":",
-      trackInstructors
-    );
+    // console.log(
+    //   "Track instructors in openEditDialog for trackId",
+    //   trackId,
+    //   ":",
+    //   trackInstructors
+    // );
     setInstructorWarning(
       trackInstructors.length === 0
         ? "No instructors assigned to courses in this track."
@@ -420,14 +420,14 @@ const AllCourseManagement = () => {
   const filteredRows = useMemo(() => {
     const uniqueRows = new Map();
     tracks?.forEach((track) => {
-      console.log("Processing track for filteredRows:", track);
+      // console.log("Processing track for filteredRows:", track);
       const filteredCourses = courses
         ?.filter((course) => {
           const hasTrack = course?.tracks?.some((t) => t.id === track.id);
-          console.log(
-            `Course ${course.name} (ID: ${course.id}) has track ${track.id}:`,
-            hasTrack
-          );
+          // console.log(
+          //   `Course ${course.name} (ID: ${course.id}) has track ${track.id}:`,
+          //   hasTrack
+          // );
           return hasTrack;
         })
         ?.filter((course) => {
@@ -462,7 +462,7 @@ const AllCourseManagement = () => {
     });
 
     const result = Array.from(uniqueRows.values());
-    console.log("Filtered rows:", result);
+    // console.log("Filtered rows:", result);
     return result;
   }, [
     tracks,

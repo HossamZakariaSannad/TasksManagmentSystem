@@ -173,13 +173,13 @@ const CreateAssignment = () => {
     (state) => state.createassignments
   );
 
-  useEffect(() => {
-    console.log("Tracks:", tracks);
-    console.log("Courses:", courses);
-    console.log("Students:", students);
-    console.log("Loading:", loading);
-    console.log("Error:", error);
-  }, [tracks, courses, students, loading, error]);
+  // useEffect(() => {S
+  //   console.log("Tracks:", tracks);
+  //   console.log("Courses:", courses);
+  //   console.log("Students:", students);
+  //   console.log("Loading:", loading);
+  //   console.log("Error:", error);
+  // }, [tracks, courses, students, loading, error]);
 
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState({

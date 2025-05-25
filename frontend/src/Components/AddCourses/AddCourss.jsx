@@ -163,12 +163,12 @@ const AddCourses = () => {
             dispatch(fetchAllCourses()).unwrap(),
             dispatch(fetchIntakes()).unwrap(),
           ]);
-        console.log("Fetched data:", {
-          instructors: instructorsRes,
-          userCourses: coursesRes,
-          allCourses: allCoursesRes,
-          intakes: intakesRes,
-        });
+        // console.log("Fetched data:", {
+        //   instructors: instructorsRes,
+        //   userCourses: coursesRes,
+        //   allCourses: allCoursesRes,
+        //   intakes: intakesRes,
+        // });
         setRetryCount(0);
       } catch (error) {
         console.error("Data fetch failed:", error);
@@ -223,14 +223,14 @@ const AddCourses = () => {
         !userCourses.track_courses.length ||
         !instructors.length
       ) {
-        console.log(
-          "No trackIds, courses, or instructors, returning empty array",
-          {
-            trackIds,
-            coursesLength: userCourses.track_courses.length,
-            instructorsLength: instructors.length,
-          }
-        );
+        // console.log(
+        //   "No trackIds, courses, or instructors, returning empty array",
+        //   {
+        //     trackIds,
+        //     coursesLength: userCourses.track_courses.length,
+        //     instructorsLength: instructors.length,
+        //   }
+        // );
         return [];
       }
 
@@ -239,25 +239,25 @@ const AddCourses = () => {
         const trackCourses = userCourses.track_courses.filter((course) =>
           course.tracks?.some((track) => track.id === trackId)
         );
-        console.log(`Courses for trackId ${trackId}:`, trackCourses);
+        // console.log(`Courses for trackId ${trackId}:`, trackCourses);
 
         const instructorIds = [
           ...new Set(
             trackCourses
               .filter((course) => course.instructor?.id)
               .map((course) => {
-                console.log(
-                  `Course ${course.name} (ID: ${course.id}) has instructor:`,
-                  course.instructor
-                );
+                // console.log(
+                //   `Course ${course.name} (ID: ${course.id}) has instructor:`,
+                //   course.instructor
+                // );
                 return course.instructor.id;
               })
           ),
         ];
-        console.log(
-          `Unique instructor IDs for trackId ${trackId}:`,
-          instructorIds
-        );
+        // console.log(
+        //   `Unique instructor IDs for trackId ${trackId}:`,
+        //   instructorIds
+        // );
         return new Set(instructorIds);
       });
 
@@ -268,20 +268,20 @@ const AddCourses = () => {
         },
         instructorIdsPerTrack[0] || new Set()
       );
-      console.log("Common instructor IDs across tracks:", [
-        ...commonInstructorIds,
-      ]);
+      // console.log("Common instructor IDs across tracks:", [
+      //   ...commonInstructorIds,
+      // ]);
 
       // Get instructor objects for common IDs
       const trackInstructors = instructors.filter((instructor) =>
         commonInstructorIds.has(instructor.id)
       );
-      console.log(
-        "Track instructors for trackIds",
-        trackIds,
-        ":",
-        trackInstructors
-      );
+      // console.log(
+      //   "Track instructors for trackIds",
+      //   trackIds,
+      //   ":",
+      //   trackInstructors
+      // );
 
       return trackInstructors;
     },
@@ -464,15 +464,15 @@ const AddCourses = () => {
     }
 
     // Debug logs
-    console.log("Instructor Options Debug:", {
-      user_id,
-      username,
-      supervisor,
-      trackInstructors,
-      allInstructors,
-      selectedTrackIds: trackIds,
-      userCoursesTracks: userCourses.tracks,
-    });
+    // console.log("Instructor Options Debug:", {
+    //   user_id,
+    //   username,
+    //   supervisor,
+    //   trackInstructors,
+    //   allInstructors,
+    //   selectedTrackIds: trackIds,
+    //   userCoursesTracks: userCourses.tracks,
+    // });
 
     // Map instructors to include "(me)" for the logged-in supervisor
     return allInstructors.map((instructor) => ({
@@ -503,27 +503,27 @@ const AddCourses = () => {
   ];
 
   // Log state for debugging
-  console.log("State:", {
-    instructors: instructorOptions,
-    tracks: trackOptions,
-    courses: courseOptions,
-    intakes: intakeOptions,
-    options: CreateOptions,
-    loading: {
-      fetchCoursesLoading,
-      fetchAllCoursesLoading,
-      instructorsLoading,
-      fetchIntakesLoading,
-      fetchAvailableIntakesLoading,
-    },
-    errors: {
-      fetchCoursesError,
-      fetchAllCoursesError,
-      instructorsError,
-      fetchIntakesError,
-      fetchAvailableIntakesError,
-    },
-  });
+  // console.log("State:", {
+  //   instructors: instructorOptions,
+  //   tracks: trackOptions,
+  //   courses: courseOptions,
+  //   intakes: intakeOptions,
+  //   options: CreateOptions,
+  //   loading: {
+  //     fetchCoursesLoading,
+  //     fetchAllCoursesLoading,
+  //     instructorsLoading,
+  //     fetchIntakesLoading,
+  //     fetchAvailableIntakesLoading,
+  //   },
+  //   errors: {
+  //     fetchCoursesError,
+  //     fetchAllCoursesError,
+  //     instructorsError,
+  //     fetchIntakesError,
+  //     fetchAvailableIntakesError,
+  //   },
+  // });
 
   // Combined loading state
   const isLoading =
