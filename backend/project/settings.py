@@ -111,11 +111,22 @@ WSGI_APPLICATION = "project.wsgi.application"
 ASGI_APPLICATION = "project.asgi.application"
 
 # Database configuration using environment variables
+# DATABASES = {
+#     "default": dj_database_url.config(
+#         default=config('DATABASE_URL', default='postgresql://task_user:0CmvYNMRy8B93qpZ6PfawCEs4HskVGcm@dpg-d0hcaore5dus73asuj0g-a/task_project_system'),
+#         conn_max_age=600,
+#     )
+# }
+
 DATABASES = {
-    "default": dj_database_url.config(
-        default=config('DATABASE_URL', default='postgresql://task_user:0CmvYNMRy8B93qpZ6PfawCEs4HskVGcm@dpg-d0hcaore5dus73asuj0g-a/task_project_system'),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'task-project-system',
+        'USER': 'postgres',
+        'PASSWORD': '2625',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [

@@ -14,10 +14,10 @@ pkgs.mkShell {
 
   shellHook = ''
     # # Create fresh virtual environment
-    # python -m venv venv
+    python -m venv venv
     source venv/bin/activate
 
     # Install numpy with specific build flags
-    # pip install --no-cache-dir --no-build-isolation numpy==1.26.4 pandas
+    # pip install --no-cache-dir -pythp-no-build-isolation numpy==1.26.4 pandas
   '';
 }
