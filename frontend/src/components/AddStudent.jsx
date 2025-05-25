@@ -186,7 +186,7 @@ export default function UploadStudentPage() {
     }
     try {
       const payload = { name, track: studentData.track_id };
-      console.log("Creating intake with payload:", payload); // Debug log
+      // console.log("Creating intake with payload:", payload); // Debug log
       const response = await apiClient.post(
         "/student/intakes/create/",
         payload
