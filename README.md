@@ -31,7 +31,7 @@ Task Flow leverages cutting-edge AI to enhance productivity and learning:
 
 ## 🎯 Key Problems Addressed & Solutions
 
-This tool tackles several key challenges, now with AI support:
+This tool tackles several key challenges:
 
 1.  **Unorganized Task Submission:**
     * **Solution:** Centralizes all task submissions in one platform for easy access, review, and management.
@@ -136,7 +136,7 @@ You can access the live application here: **[Task Flow](https://tasks-managment-
 
 ---
 
-## 🧑‍💻 Roles & Workflow (Now with AI Integration)
+##  Roles & Workflow 
 
 The system features a hierarchical role structure, with AI tools available to various roles:
 
