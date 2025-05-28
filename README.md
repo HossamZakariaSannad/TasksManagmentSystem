@@ -134,8 +134,6 @@ The multi-tiered role system (Superadmin → Branch Manager → Supervisor → I
 
 You can access the live application here: **[Task Flow](https://tasks-managment-system.vercel.app/)**
 
-*(Please replace `Your Live URL Here` with the actual URL for "Task Flow")*
-
 ---
 
 ## 🧑‍💻 Roles & Workflow (Now with AI Integration)
